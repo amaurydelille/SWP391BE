@@ -31,7 +31,7 @@ app.use(session({
     cookie: {
         secure: false,
         httpOnly: true,
-        maxAge: 3600000
+        maxAge: 3600
     }
 }));
 
@@ -74,6 +74,18 @@ app.get('/api/users/:userId/artworks', async (req, res) => {
         console.error('Error:', error);
         res.status(500).send("Error fetching user artworks");
     }
+});
+
+app.get('/api/users/:userId/info', async (req, res) => {
+   const userId = req.params.userId;
+   try {
+       const db = await connectToDatabase();
+       const name = await db.collection('users').findOne({ _id: userId });
+       res.status(200).json(name);
+   } catch (error) {
+       console.error('Error:', error);
+       res.status(500).send("Error fetching user name/infos");
+   }
 });
 
 
