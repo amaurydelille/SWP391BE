@@ -64,6 +64,19 @@ app.get('/api/getartwork', async(req, res) => {
    }
 });
 
+app.get('/api/users/:userId/artworks', async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const db = await connectToDatabase();
+        const userArtworks = await db.collection('artworks').find({ userid: userId }).toArray();
+        res.status(200).json(userArtworks);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send("Error fetching user artworks");
+    }
+});
+
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
@@ -87,11 +100,11 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/addartwork', async (req, res) => {
     try {
         const { userid, title, description, typeDesign, image, name, email, birthday, gender } = req.body;
-        const db = await connectToDatabase(); // Await the connection
+        const db = await connectToDatabase();
         const artwork = { userid, title, description, typeDesign, image, name, email, birthday, gender };
         const result = await db.collection('artworks').insertOne(artwork);
-        const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId }); // Get the inserted artwork
-        res.status(200).json(insertedArtwork); // Send the inserted artwork back to the frontend
+        const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
+        res.status(200).json(insertedArtwork);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error registering artwork");
@@ -113,8 +126,6 @@ app.post('/api/login', async (req, res) => {
 
         if (passwordMatch) {
             console.log(JSON.stringify(user._id));
-            //req.session.user = user;
-
             return res.status(200).json({ message: 'Login successful', user: user });
         } else {
             return res.status(401).json({ message: 'Email or password is incorrect' });
