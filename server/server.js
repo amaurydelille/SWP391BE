@@ -24,17 +24,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(
-    session({
-        key: "userId",
-        secret: process.env.ACCESS_TOKEN_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            expires: 60 * 60 * 24,
-        },
-    })
-);
+app.use(session({
+    secret: process.env.ACCESS_TOKEN_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        httpOnly: true,
+        maxAge: 3600000
+    }
+}));
+
 app.get('/', (req, res) => {
     res.send('Backend server');
 });
@@ -98,15 +98,12 @@ app.post('/api/addartwork', async (req, res) => {
     }
 });
 
-
-const sessionTokens = {};
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
         const db = await connectToDatabase();
         const user = await db.collection('users').findOne({ email: email });
-        console.log(email, password);
 
         if (!user) {
             return res.status(401).json({ message: 'Email or password is incorrect' });
@@ -115,23 +112,16 @@ app.post('/api/login', async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
-            req.session.user = user;
-            return res.status(200).json({ message: 'Login successful', user });
+            console.log(JSON.stringify(user._id));
+            //req.session.user = user;
+
+            return res.status(200).json({ message: 'Login successful', user: user });
         } else {
             return res.status(401).json({ message: 'Email or password is incorrect' });
         }
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Server error' });
-    }
-});
-
-app.get("/api/login", (req, res) => {
-    res.send("api/login endpoint")
-    if (req.session.user) {
-        res.send({ loggedIn: true, user: req.session.user });
-    } else {
-        res.send({ loggedIn: false });
     }
 });
 
