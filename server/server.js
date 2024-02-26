@@ -86,9 +86,9 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/addartwork', async (req, res) => {
     try {
-        const { title, description, typeDesign, image, name, email, birthday, gender } = req.body;
+        const { userid, title, description, typeDesign, image, name, email, birthday, gender } = req.body;
         const db = await connectToDatabase(); // Await the connection
-        const artwork = { title, description, typeDesign, image, name, email, birthday, gender };
+        const artwork = { userid, title, description, typeDesign, image, name, email, birthday, gender };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId }); // Get the inserted artwork
         res.status(200).json(insertedArtwork); // Send the inserted artwork back to the frontend
