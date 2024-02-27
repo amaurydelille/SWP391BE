@@ -4,6 +4,8 @@ const { connectToDatabase } = require('./mongodb');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const { ObjectId } = require('mongodb');
 
 const app = express();
 const port = 5000;
@@ -77,16 +79,19 @@ app.get('/api/users/:userId/artworks', async (req, res) => {
 });
 
 app.get('/api/users/:userId/info', async (req, res) => {
-   const userId = req.params.userId;
-   try {
-       const db = await connectToDatabase();
-       const name = await db.collection('users').findOne({ _id: userId });
-       res.status(200).json(name);
-   } catch (error) {
-       console.error('Error:', error);
-       res.status(500).send("Error fetching user name/infos");
-   }
+    const userId = req.params.userId;
+    console.log(userId);
+    try {
+        const db = await connectToDatabase();
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId)});
+        console.log(user);
+        res.status(200).json({name: user.name});
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send("Error fetching user name/infos");
+    }
 });
+
 
 
 app.listen(port, () => {
@@ -100,9 +105,15 @@ app.post('/api/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const db = await connectToDatabase();
-        await db.collection('users').insertOne({ name, email, password: hashedPassword });
+        const mailCheck = await db.collection('users').findOne({email: email});
 
-        res.status(200).send("User registered successfully");
+        if (mailCheck) {
+            res.status(500).send({register: false});
+        } else {
+            await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience' });
+            res.status(200).send({register: true});
+        }
+
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error registering user");
@@ -111,12 +122,12 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/addartwork', async (req, res) => {
     try {
-        const { userid, title, description, typeDesign, image, name, email, birthday, gender } = req.body;
+        const { userid, title, description, typeDesign, price, image, name, email, birthday, gender } = req.body;
         const db = await connectToDatabase();
-        const artwork = { userid, title, description, typeDesign, image, name, email, birthday, gender };
+        const artwork = { userid, title, description, typeDesign, price, image, name, email, birthday, gender };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
-        res.status(200).json(insertedArtwork);
+        res.status(200).json({artwork: insertedArtwork, message: true});
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error registering artwork");
@@ -129,6 +140,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const db = await connectToDatabase();
         const user = await db.collection('users').findOne({ email: email });
+        const admin = user.role === 'admin';
 
         if (!user) {
             return res.status(401).json({ message: 'Email or password is incorrect' });
@@ -137,8 +149,9 @@ app.post('/api/login', async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
+            const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             console.log(JSON.stringify(user._id));
-            return res.status(200).json({ message: 'Login successful', user: user });
+            return res.status(200).json({ message: 'Login successful', accessToken: accessToken, user: user, admin:  admin});
         } else {
             return res.status(401).json({ message: 'Email or password is incorrect' });
         }
