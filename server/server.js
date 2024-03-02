@@ -61,14 +61,14 @@ app.get('/api/getusers', async (req, res) => {
 });
 
 app.get('/api/getartwork', async(req, res) => {
-   try {
-       const db = await connectToDatabase();
-       artworkResults = await db.collection('artworks').find({}).limit(50).toArray();
-       res.send(artworkResults).status(200);
-   } catch (error) {
-       console.error('Error:', error);
-       res.status(500).send("Error server");
-   }
+    try {
+        const db = await connectToDatabase();
+        artworkResults = await db.collection('artworks').find({}).limit(50).toArray();
+        res.send(artworkResults).status(200);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send("Error server");
+    }
 });
 
 app.get('/api/users/:userId/artworks', async (req, res) => {
@@ -96,8 +96,6 @@ app.get('/api/users/:userId/info', async (req, res) => {
         res.status(500).send("Error fetching user name/infos");
     }
 });
-
-
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
@@ -151,14 +149,14 @@ app.delete('/api/artworks/:artworkId', async (req, res) => {
     }
 });
 
-app.post('/api/users/:userId/saved/:artworkId', async (req, res) => {
-   const userId = req.params.userId;
-   const artworkId = req.params.artworkId;
-   const savedItem = { userId, artworkId }
+app.post('api/users/:userId/cart/:artworkId', async (req, res) => {
+    const userId = req.params.userId;
+    const artworkId = req.params.artworkId;
+    const cartItem = { userId, artworkId };
 
     try {
         const db = await connectToDatabase();
-        await db.collection('saved').insertOne(savedItem);
+        await db.collection('carts_items').insertOne(cartItem);
         res.status(200).json({ message: 'Artwork added to the cart succesfuly' });
     } catch (error) {
         console.error('Error adding the artwork to your cart:', error);
@@ -166,36 +164,7 @@ app.post('/api/users/:userId/saved/:artworkId', async (req, res) => {
     }
 });
 
-app.delete('/api/users/:userId/saved/:artworkId', async (req, res) => {
-    const userId = req.params.userId;
-    const artworkId = req.params.artworkId;
-
-    try {
-        const db = await connectToDatabase();
-        await db.collection('saved').deleteOne({ _id: new ObjectId(artworkId) });
-        res.status(200).json({ message: 'Artwork deleted from the saved successfully' });
-    } catch (error) {
-        console.error('Error deleting the artwork from the saved:', error);
-        res.status(500).send("Error deleting artwork from the saved");
-    }
-});
-
-app.post('/api/users/:userId/cart/:artworkId', async (req, res) => {
-   const userId = req.params.userId;
-   const artworkId = req.params.artworkId;
-   const cartItem = { userId, artworkId };
-
-   try {
-       const db = await connectToDatabase();
-       await db.collection('carts_items').insertOne(cartItem);
-       res.status(200).json({ message: 'Artwork added to the cart succesfuly' });
-   } catch (error) {
-       console.error('Error adding the artwork to your cart:', error);
-       res.status(500).send('Error adding the artwork to your cart');
-   }
-});
-
-app.delete('/api/users/:userId/cart/:artworkId', async (req, res) => {
+app.delete('api/users/:userId/cart/:artworkId', async (req, res) => {
     const userId = req.params.userId;
     const artworkId = req.params.artworkId;
 
@@ -236,6 +205,27 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+app.post('/api/:artworkId/comments', async (req, res) => {
+   try {
+       const artwordId = req.params.artworkId;
+       const { text, userId } = req.body;
+       const db = await connectToDatabase();
+       await db.collection('comments').insertOne({ artworkId, userId, text });
+       res.status(200).json({ message: 'Comment added to the artwork succesfuly' });
+   } catch(e) {
+       res.status(500).json({ message: 'Comment error, not successfuly added' })
+   }
+});
 
+app.get('api/:artworkId/comments', async (req, res) => {
+   try {
+       const artworkId = req.params.artworkId;
+       const db = connectToDatabase();
+       const comments = db.collection('comments').find({}).limit(50).toArray();
+       res.send(comments).status(200);
+   } catch (e) {
+       res.status(500).json({ message: 'Comment error, not successfuly added', error: e})
+   }
+});
 
 module.exports = {app, userResults, artworkResults};
