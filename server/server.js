@@ -151,7 +151,36 @@ app.delete('/api/artworks/:artworkId', async (req, res) => {
     }
 });
 
-app.post('api/users/:userId/cart/:artworkId', async (req, res) => {
+app.post('/api/users/:userId/saved/:artworkId', async (req, res) => {
+   const userId = req.params.userId;
+   const artworkId = req.params.artworkId;
+   const savedItem = { userId, artworkId }
+
+    try {
+        const db = await connectToDatabase();
+        await db.collection('saved').insertOne(savedItem);
+        res.status(200).json({ message: 'Artwork added to the cart succesfuly' });
+    } catch (error) {
+        console.error('Error adding the artwork to your cart:', error);
+        res.status(500).send('Error adding the artwork to your cart');
+    }
+});
+
+app.delete('/api/users/:userId/saved/:artworkId', async (req, res) => {
+    const userId = req.params.userId;
+    const artworkId = req.params.artworkId;
+
+    try {
+        const db = await connectToDatabase();
+        await db.collection('saved').deleteOne({ _id: new ObjectId(artworkId) });
+        res.status(200).json({ message: 'Artwork deleted from the saved successfully' });
+    } catch (error) {
+        console.error('Error deleting the artwork from the saved:', error);
+        res.status(500).send("Error deleting artwork from the saved");
+    }
+});
+
+app.post('/api/users/:userId/cart/:artworkId', async (req, res) => {
    const userId = req.params.userId;
    const artworkId = req.params.artworkId;
    const cartItem = { userId, artworkId };
@@ -166,7 +195,7 @@ app.post('api/users/:userId/cart/:artworkId', async (req, res) => {
    }
 });
 
-app.delete('api/users/:userId/cart/:artworkId', async (req, res) => {
+app.delete('/api/users/:userId/cart/:artworkId', async (req, res) => {
     const userId = req.params.userId;
     const artworkId = req.params.artworkId;
 
@@ -206,5 +235,7 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
 
 module.exports = {app, userResults, artworkResults};
