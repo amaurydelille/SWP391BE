@@ -125,9 +125,9 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/addartwork', async (req, res) => {
     try {
-        const { userid, title, description, typeDesign, price, image, name, email, birthday, gender } = req.body;
+        const { userid, title, description, typeDesign, price, image } = req.body;
         const db = await connectToDatabase();
-        const artwork = { userid, title, description, typeDesign, price, image, name, email, birthday, gender };
+        const artwork = { userid, title, description, typeDesign, price, image };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
         res.status(200).json({artwork: insertedArtwork, message: true});
@@ -217,7 +217,7 @@ app.post('/api/:artworkId/comments', async (req, res) => {
    }
 });
 
-app.get('api/:artworkId/comments', async (req, res) => {
+app.get('/api/:artworkId/comments', async (req, res) => {
    try {
        const artworkId = req.params.artworkId;
        const db = connectToDatabase();
@@ -226,6 +226,33 @@ app.get('api/:artworkId/comments', async (req, res) => {
    } catch (e) {
        res.status(500).json({ message: 'Comment error, not successfuly added', error: e})
    }
+});
+
+// Save Artwork API
+app.post('/api/:userId/saved', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const artworkId = req.body;
+        const savedArtwork = { userId, artworkId };
+        const db = await connectToDatabase();
+        await db.collection('saved').insertOne({ savedArtwork });
+
+        res.status(200).json({ message: 'Artwork saved successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Could not save artwork: ${e}` });
+    }
+});
+
+app.get('/api/:userId/saved', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const savedArtworks = await db.collection('saved').find({ userId: new ObjectId(userId) }).toArray();
+
+        res.status(200).json({ savedArtworks: savedArtworks, message: 'Saved artworks listed successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Artworks could not be listed successfully: ${e}` });
+    }
 });
 
 module.exports = {app, userResults, artworkResults};
