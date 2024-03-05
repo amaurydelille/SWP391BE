@@ -127,7 +127,7 @@ app.post('/api/addartwork', async (req, res) => {
     try {
         const { userid, title, description, typeDesign, price, image } = req.body;
         const db = await connectToDatabase();
-        const artwork = { userid, title, description, typeDesign, price, image };
+        const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
         res.status(200).json({artwork: insertedArtwork, message: true});
@@ -253,6 +253,58 @@ app.get('/api/:userId/saved', async (req, res) => {
     } catch (e) {
         res.status(500).json({ message: `Artworks could not be listed successfully: ${e}` });
     }
+});
+
+// Admin CRUD Related APIS
+// Create User
+app.post('/api/admin/users', async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+        const user = { name, email, password, role };
+        const db = await connectToDatabase();
+        await db.collection('users').insertOne(user);
+
+        res.status(200).json({ message: 'User inserted successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `User could not be inserted: ${e}` });
+    }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const db = await connectToDatabase();
+        const users = await db.collection('users').find({}).toArray();
+
+        res.status(200).json({ users: users, message: 'Users could be listed successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Users could not be listed: ${e}` });
+    }
+});
+
+app.put('/api/admin/users/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const { name, email, password, role } = req.body;
+        const user = { name, email, password, role };
+        const db = await connectToDatabase();
+        await db.collection('users').update({ _id: new ObjectId(userId) }, user);
+
+        res.status(200).json({ message: 'User updated successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `User could not be updated: ${e}` });
+    }
+});
+
+app.delete('/api/admin/users/:userId', async (req, res) => {
+   try {
+       const userId = req.params.userId;
+       const db = await connectToDatabase();
+       await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
+
+       res.status(200).json({ message: 'User deleted successfully' });
+   }  catch (e) {
+        res.status(500).json({ message: `User could not be deleted successfully: ${e}` });
+   }
 });
 
 module.exports = {app, userResults, artworkResults};
