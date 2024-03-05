@@ -255,6 +255,37 @@ app.get('/api/:userId/saved', async (req, res) => {
     }
 });
 
+//Like artwork API
+app.post('/api/artworks/:artworkId/liked', async (req, res) => {
+    const artworkId = req.params.artworkId;
+
+    try {
+        const db = await connectToDatabase();
+
+        // Find artwork by Id
+        const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+
+        if (!artwork) {
+            return res.status(404).json({ message: 'Artwork not found' });
+        }
+
+        // Increment the 'likes' count
+        artwork.likes = (artwork.likes || 0) + 1;
+
+        // Update the artwork with the new 'likes' count
+        await db.collection('artworks').updateOne(
+            { _id: new ObjectId(artworkId) },
+            { $set: { likes: artwork.likes } }
+        );
+
+        res.status(200).json({ likes: artwork.likes, message: 'Artwork liked successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Could not like artwork: ${e}` });
+    }
+});
+
+
+
 // Admin CRUD Related APIS
 // Create User
 app.post('/api/admin/users', async (req, res) => {
