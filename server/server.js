@@ -284,7 +284,20 @@ app.post('/api/artworks/:artworkId/liked', async (req, res) => {
     }
 });
 
-
+// Send Artwork to Homepage API
+app.post('/api/homepage/artworks', async (req, res) => {
+    try {
+        const { userid, title, description, typeDesign, price, image } = req.body;
+        const db = await connectToDatabase();
+        const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
+        const result = await db.collection('homepage').insertOne(artwork);
+        const insertedArtwork = await db.collection('homepage').findOne({ _id: result.insertedId });
+        
+        res.status(200).json({ artwork: insertedArtwork, message: 'Artwork sent to the homepage successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error sending artwork to the homepage: ${e}` });
+    }
+});
 
 // Admin CRUD Related APIS
 // Create User
