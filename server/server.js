@@ -256,7 +256,7 @@ app.get('/api/:userId/saved', async (req, res) => {
 });
 
 //Like artwork API
-app.post('/api/artworks/:artworkId/liked', async (req, res) => {
+app.post('/api/artworks/:artworkId/likes', async (req, res) => {
     const artworkId = req.params.artworkId;
 
     try {
@@ -278,11 +278,35 @@ app.post('/api/artworks/:artworkId/liked', async (req, res) => {
             { $set: { likes: artwork.likes } }
         );
 
-        res.status(200).json({ likes: artwork.likes, message: 'Artwork liked successfully' });
+        //res.status(200).json({ likes: artwork.likes, message: 'Artwork liked successfully' });
+        res.status(200).json({ message: 'Artwork liked successfully' });
     } catch (e) {
         res.status(500).json({ message: `Could not like artwork: ${e}` });
     }
 });
+
+app.get('/api/artworks/:artworkId/likes', async (req, res) => {
+    const artworkId = req.params.artworkId;
+
+    try {
+        const db = await connectToDatabase();
+
+        // Find the artwork by ID
+        const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+
+        if (!artwork) {
+            return res.status(404).json({ message: 'Artwork not found' });
+        }
+
+        // Get the current 'likes' count
+        const likesCount = artwork.likes || 0;
+
+        res.status(200).json({ likes: likesCount, message: 'Likes count retrieved successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Likes count could not be retrieve: ${e}` });
+    }
+});
+
 
 // Send Artwork to Homepage API
 app.post('/api/homepage/artworks', async (req, res) => {
@@ -292,10 +316,22 @@ app.post('/api/homepage/artworks', async (req, res) => {
         const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
         const result = await db.collection('homepage').insertOne(artwork);
         const insertedArtwork = await db.collection('homepage').findOne({ _id: result.insertedId });
-        
-        res.status(200).json({ artwork: insertedArtwork, message: 'Artwork sent to the homepage successfully' });
+
+        //res.status(200).json({ artwork: insertedArtwork, message: 'Artwork sent to the homepage successfully' });
+        res.status(200).json({ message: 'Artwork sent to the homepage successfully' });
+
     } catch (e) {
         res.status(500).json({ message: `Error sending artwork to the homepage: ${e}` });
+    }
+});
+
+app.get('/api/homepage/artworks', async (req, res) => {
+    try {
+        const db = await connectToDatabase();
+        const homepageArtworks = await db.collection('homepage').find({}).limit(50).toArray();
+        res.status(200).json({homepageArtworks, message: `Sending artwork to home page successfully`});
+    } catch (e) {
+        res.status(500).json({ message: `Artwork could not be send: ${e}`});
     }
 });
 
