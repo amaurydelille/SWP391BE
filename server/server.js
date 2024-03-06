@@ -205,6 +205,40 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Change password
+app.post('/api/changePassword', async (req, res) => {
+    const { email, currentPassword, newPassword } = req.body;
+
+    try {
+        const db = await connectToDatabase();
+        const user = await db.collection('users').findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+
+        if (passwordMatch) {
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+            await db.collection('users').updateOne(
+                { _id: new ObjectId(user._id) },
+                { $set: { password: hashedNewPassword } }
+            );
+
+            // generate new token, if needed
+
+            return res.status(200).json({ message: 'Password changed successfully' });
+        } else {
+            return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
 app.post('/api/:artworkId/comments', async (req, res) => {
    try {
        const artwordId = req.params.artworkId;
