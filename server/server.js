@@ -83,6 +83,17 @@ app.get('/api/users/:userId/artworks', async (req, res) => {
     }
 });
 
+app.get('/api/users/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) }).toArray();
+        res.status(200).json({ user : user });
+    } catch (e) {
+        res.status(500).json({ message: `Error getting the user: ${e}` });
+    }
+});
+
 app.get('/api/users/:userId/info', async (req, res) => {
     const userId = req.params.userId;
     console.log(userId);
@@ -146,6 +157,19 @@ app.delete('/api/artworks/:artworkId', async (req, res) => {
     } catch (error) {
         console.error('Error deleting artwork:', error);
         res.status(500).send("Error deleting artwork");
+    }
+});
+
+app.put('/api/artworks/:artworkId', async (req, res) => {
+    try {
+        const newArtworkData = req.body;
+        const artworkId = req.params.artworkId;
+        const db = await connectToDatabase();
+        await db.collection('artworks').updateOne({ _id: new ObjectId(artworkId) }, { newArtworkData });
+
+        res.status(200).json({ message: 'Artwork data updated successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Could not update artwork: ${e}` });
     }
 });
 
@@ -385,6 +409,19 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
    }  catch (e) {
         res.status(500).json({ message: `User could not be deleted successfully: ${e}` });
    }
+});
+
+// Edit Profile API
+app.put('/api/users/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+        res.status(200).json({ message: 'User could be updated successfully' });
+    } catch (e) {
+        res.Status(500).json({ message: `Could not updated the user: ${e}` });
+    }
 });
 
 module.exports = {app, userResults, artworkResults};
