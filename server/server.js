@@ -309,13 +309,13 @@ app.get('/api/artworks/:artworkId/likes', async (req, res) => {
 
 
 // Send Artwork to Homepage API
-app.post('/api/homepage/artworks', async (req, res) => {
+app.post('/api/artworks/:artworkId', async (req, res) => {
     try {
         const { userid, title, description, typeDesign, price, image } = req.body;
         const db = await connectToDatabase();
         const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
-        const result = await db.collection('homepage').insertOne(artwork);
-        const insertedArtwork = await db.collection('homepage').findOne({ _id: result.insertedId });
+        const result = await db.collection('artworks').insertOne(artwork);
+        const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
 
         //res.status(200).json({ artwork: insertedArtwork, message: 'Artwork sent to the homepage successfully' });
         res.status(200).json({ message: 'Artwork sent to the homepage successfully' });
@@ -325,10 +325,10 @@ app.post('/api/homepage/artworks', async (req, res) => {
     }
 });
 
-app.get('/api/homepage/artworks', async (req, res) => {
+app.get('/api/artworks/:artworkId', async (req, res) => {
     try {
         const db = await connectToDatabase();
-        const homepageArtworks = await db.collection('homepage').find({}).limit(50).toArray();
+        const homepageArtworks = await db.collection('artworks').find({}).limit(50).toArray();
         res.status(200).json({homepageArtworks, message: `Sending artwork to home page successfully`});
     } catch (e) {
         res.status(500).json({ message: `Artwork could not be send: ${e}`});
