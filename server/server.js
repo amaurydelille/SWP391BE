@@ -458,4 +458,118 @@ app.put('/api/users/:userId', async (req, res) => {
     }
 });
 
+// Admin CRUD artwork
+app.post('/api/admin/artworks', async (req, res) => {
+    try {
+        const { userid, title, description, typeDesign, price, image } = req.body;
+        const db = await connectToDatabase();
+        const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
+        const result = await db.collection('artworks').insertOne(artwork);
+        const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
+
+        res.status(200).json({ message: 'Artwork created successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error creating artwork: ${e}` });
+    }
+});
+
+app.get('/api/admin/artworks', async (req, res) => {
+    try {
+        const artworkId = req.params.artworkId;
+        const db = await connectToDatabase();
+        const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+
+        if (!artwork) {
+            return res.status(404).json({ message: 'Artwork not found' });
+        }
+
+        res.status(200).json({ artwork: artwork, message: 'Artwork retrieved successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error getting artwork: ${e}` });
+    }
+});
+
+app.put('/api/admin/artworks/:artworkId', async (req, res) => {
+    try {
+        const newArtworkData = req.body;
+        const artworkId = req.params.artworkId;
+        const db = await connectToDatabase();
+        await db.collection('artworks').updateOne({ _id: new ObjectId(artworkId) }, { $set: newArtworkData });
+
+        res.status(200).json({ message: 'Artwork updated successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error updating artwork: ${e}` });
+    }
+});
+
+app.delete('/api/admin/artworks/:artworkId', async (req, res) => {
+    const artworkId = req.params.artworkId;
+    try {
+        const db = await connectToDatabase();
+        await db.collection('artworks').deleteOne({ _id: new ObjectId(artworkId) });
+
+        res.status(200).json({ message: 'Artwork deleted successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error deleting artwork: ${e}` });
+    }
+});
+
+// Admin CRUD orders
+app.post('/api/admin/orders', async (req, res) => {
+    try {
+        const { userId, artworkId, orderDate, quantity, totalAmount, paymentStatus, paymentMethod } = req.body;
+        const db = await connectToDatabase();
+        const order = { userId, artworkId, orderDate, quantity, totalAmount, paymentStatus, paymentMethod };
+        const result = await db.collection('orders').insertOne(order);
+        const insertedOrder = await db.collection('orders').findOne({ _id: result.insertedId });
+
+        res.status(200).json({ message: 'Order created successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error creating order: ${e}` });
+    }
+});
+
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const db = await connectToDatabase();
+        const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        res.status(200).json({ order: order, message: 'Order retrieved successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error getting order: ${e}` });
+    }
+});
+
+app.put('/api/admin/orders/:orderId', async (req, res) => {
+    try {
+        const newOrderData = req.body;
+        const orderId = req.params.orderId;
+        const db = await connectToDatabase();
+        await db.collection('orders').updateOne({ _id: new ObjectId(orderId) }, { $set: newOrderData });
+
+        res.status(200).json({ message: 'Order updated successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error updating order: ${e}` });
+    }
+});
+
+app.delete('/api/admin/orders/:orderId', async (req, res) => {
+    const orderId = req.params.orderId;
+    try {
+        const db = await connectToDatabase();
+        await db.collection('orders').deleteOne({ _id: new ObjectId(orderId) });
+
+        res.status(200).json({ message: 'Order deleted successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error deleting order: ${e}` });
+    }
+});
+
+
+
 module.exports = {app, userResults, artworkResults};
