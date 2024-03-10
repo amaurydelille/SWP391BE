@@ -60,10 +60,10 @@ app.get('/api/getusers', async (req, res) => {
     }
 });
 
-app.get('/api/getartwork', async(req, res) => {
+app.get('/api/homepage/artworks', async(req, res) => {
     try {
         const db = await connectToDatabase();
-        artworkResults = await db.collection('artworks').find({}).limit(50).toArray();
+        artworkResults = await db.collection('artworks').find({}).limit(200).toArray();
         res.send(artworkResults).status(200);
     } catch (error) {
         console.error('Error:', error);
@@ -265,7 +265,7 @@ app.post('/api/changePassword', async (req, res) => {
 
 app.post('/api/:artworkId/comments', async (req, res) => {
    try {
-       const artwordId = req.params.artworkId;
+       const artworkId = req.params.artworkId;
        const { text, userId } = req.body;
        const db = await connectToDatabase();
        await db.collection('comments').insertOne({ artworkId, userId, text });
@@ -278,8 +278,8 @@ app.post('/api/:artworkId/comments', async (req, res) => {
 app.get('/api/:artworkId/comments', async (req, res) => {
    try {
        const artworkId = req.params.artworkId;
-       const db = connectToDatabase();
-       const comments = db.collection('comments').find({}).limit(50).toArray();
+       const db = await connectToDatabase();
+       const comments = db.collection('comments').find({ _id: new ObjectId(artworkId) }).limit(50).toArray();
        res.send(comments).status(200);
    } catch (e) {
        res.status(500).json({ message: 'Comment error, not successfuly added', error: e})
@@ -455,6 +455,19 @@ app.put('/api/users/:userId', async (req, res) => {
         res.status(200).json({ message: 'User could be updated successfully' });
     } catch (e) {
         res.Status(500).json({ message: `Could not updated the user: ${e}` });
+    }
+});
+
+// Follow creator
+app.post('/api/users/:userId/follow/:userFollowedId', async (req, res) => {
+    try {
+        const { userId, userFollowedId } = req.params;
+        const db = await connectToDatabase();
+        await db.collection('follows').insertOne({ userId: userId, followedUser: userFollowedId });
+
+        res.status(200).json({ message: ('Follow could be inserted successfully') });
+    } catch (e) {
+        res.status(500).json({ message: `Could not insert follow: ${e}` });
     }
 });
 
