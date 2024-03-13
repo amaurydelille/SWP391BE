@@ -63,8 +63,8 @@ app.get('/api/getusers', async (req, res) => {
 app.get('/api/homepage/artworks', async(req, res) => {
     try {
         const db = await connectToDatabase();
-        artworkResults = await db.collection('artworks').find({}).limit(200).toArray();
-        res.send(artworkResults).status(200);
+        artworkResults = await db.collection('artworks').find({}).toArray();
+        res.send({artworks: artworkResults}).status(200);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error server");
