@@ -449,8 +449,13 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
 app.put('/api/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
+        const { name: name, mail: mail, password: password, picture: picture } = req.body;
+        const user = [ name, mail, password, picture ];
+
+        user.filter(n => n);
+
         const db = await connectToDatabase();
-        await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        await db.collection('users').update({ _id: new ObjectId(userId) }, JSON.stringify(user));
 
         res.status(200).json({ message: 'User could be updated successfully' });
     } catch (e) {
