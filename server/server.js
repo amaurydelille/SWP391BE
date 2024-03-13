@@ -71,6 +71,7 @@ app.get('/api/homepage/artworks', async(req, res) => {
     }
 });
 
+// Get Users Artworks
 app.get('/api/users/:userId/artworks', async (req, res) => {
     const userId = req.params.userId;
     try {
@@ -80,6 +81,25 @@ app.get('/api/users/:userId/artworks', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error fetching user artworks");
+    }
+});
+
+// Update Users Artwork
+app.put('/api/users/:userId/artworks/:artworkId', async (req, res) => {
+    const userId = req.params.userId;
+    const artworkId = req.params.artworkId;
+
+    try {
+        const { _id, title, description, typeDesign, price } = req.body;
+        const artwork = [ title, description, typeDesign, price ];
+        artwork.filter(n => n);
+        const db = await connectToDatabase();
+        await db.collection('artworks').update({_id: new ObjectId(_id)}, artwork);
+
+        res.status(200).json({ message: "Artwork updated successfully" });
+    } catch (e) {
+        res.status(500).json({ message: 'Could not update artwork' });
+        console.log(`Error updating artwork: ${e}`);
     }
 });
 
