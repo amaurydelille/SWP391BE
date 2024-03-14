@@ -6,6 +6,7 @@ const session = require('express-session');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
+const { editDistance } = require('../services');
 
 const app = express();
 const port = 5000;
@@ -607,5 +608,22 @@ app.delete('/api/admin/orders/:orderId', async (req, res) => {
         res.status(500).json({ message: `Error deleting order: ${e}` });
     }
 });
+
+// Search Bar API
+app.get('/search/:item', async (req, res) => {
+    try {
+        const item = req.params.item;
+        const db = await connectToDatabase();
+        const response = await db.collection('artworks').find({}).toArray();
+        const artworks = response.filter(x => x.title.includes(item.toString()));
+
+        res.status(200).json({ artworks: artworks });
+    }
+    catch (e) {
+        console.log(e)
+        res.status(500).json({ message: `Could not get results for this: ${e}` });
+    }
+});
+
 
 module.exports = {app, userResults, artworkResults};
