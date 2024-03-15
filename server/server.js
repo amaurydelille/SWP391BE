@@ -289,7 +289,7 @@ app.post('/api/:artworkId/comments', async (req, res) => {
        const artworkId = req.params.artworkId;
        const { text, userId } = req.body;
        const db = await connectToDatabase();
-       await db.collection('comments').insertOne({ artworkId, userId, text });
+       await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, text: text });
        res.status(200).json({ message: 'Comment added to the artwork succesfuly' });
    } catch(e) {
        res.status(500).json({ message: 'Comment error, not successfuly added' })
