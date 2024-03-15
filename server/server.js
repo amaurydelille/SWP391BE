@@ -6,7 +6,7 @@ const session = require('express-session');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
-const { editDistance } = require('../services');
+const { editDistance, merge} = require('../services');
 
 const app = express();
 const port = 5000;
@@ -615,7 +615,10 @@ app.get('/search/:item', async (req, res) => {
         const item = req.params.item;
         const db = await connectToDatabase();
         const response = await db.collection('artworks').find({}).toArray();
-        const artworks = response.filter(x => x.title.includes(item.toString()));
+        const first = response.filter(x => x.title.includes(item.toString()));
+        const second = response.filter(x => editDistance(x.title.toString(), item.toString()) < 10);
+
+        const artworks = merge(first, second);
 
         res.status(200).json({ artworks: artworks });
     }
