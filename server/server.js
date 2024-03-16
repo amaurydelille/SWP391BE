@@ -61,11 +61,21 @@ app.get('/api/getusers', async (req, res) => {
     }
 });
 
-app.get('/api/homepage/artworks', async(req, res) => {
+app.get('/api/homepage/artworks', async (req, res) => {
     try {
         const db = await connectToDatabase();
-        artworkResults = await db.collection('artworks').find({}).toArray();
-        res.send({artworks: artworkResults}).status(200);
+        const artworkResults = await db.collection('artworks').aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userid',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            }
+        ]).toArray();
+
+        res.status(200).json({ artworks: artworkResults });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error server");
@@ -77,7 +87,7 @@ app.get('/api/users/:userId/artworks', async (req, res) => {
     const userId = req.params.userId;
     try {
         const db = await connectToDatabase();
-        const userArtworks = await db.collection('artworks').find({ userid: userId }).toArray();
+        const userArtworks = await db.collection('artworks').find({ userid: new ObjectId(userId) }).toArray();
         res.status(200).json(userArtworks);
     } catch (error) {
         console.error('Error:', error);
@@ -159,7 +169,7 @@ app.post('/api/addartwork', async (req, res) => {
     try {
         const { userid, title, description, typeDesign, price, image } = req.body;
         const db = await connectToDatabase();
-        const artwork = { userid, title, description, typeDesign, price, image, likes: 0 };
+        const artwork = { userid: new ObjectId(userid), title: title, description: description, typeDesign: typeDesign, price: price, image: image, likes: 0 };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
         res.status(200).json({artwork: insertedArtwork, message: true});
@@ -290,9 +300,9 @@ app.post('/api/:artworkId/comments', async (req, res) => {
        const { text, userId } = req.body;
        const db = await connectToDatabase();
        await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, text: text });
-       res.status(200).json({ message: 'Comment added to the artwork succesfuly' });
+       res.status(200).json({ message: 'Comment added to the artwork successfully' });
    } catch(e) {
-       res.status(500).json({ message: 'Comment error, not successfuly added' })
+       res.status(500).json({ message: 'Comment error, not successfully added' })
    }
 });
 
@@ -300,10 +310,10 @@ app.get('/api/:artworkId/comments', async (req, res) => {
    try {
        const artworkId = req.params.artworkId;
        const db = await connectToDatabase();
-       const comments = db.collection('comments').find({ _id: new ObjectId(artworkId) }).limit(50).toArray();
-       res.send(comments).status(200);
+       const comments = await db.collection('comments').find({ artworkId: artworkId }).toArray();
+       res.status(200).json({comments: comments});
    } catch (e) {
-       res.status(500).json({ message: 'Comment error, not successfuly added', error: e})
+       res.status(500).json({ message: 'Comment error, not successfully added', error: e})
    }
 });
 
@@ -615,8 +625,8 @@ app.get('/search/:item', async (req, res) => {
         const item = req.params.item;
         const db = await connectToDatabase();
         const response = await db.collection('artworks').find({}).toArray();
-        const first = response.filter(x => x.title.includes(item.toString()));
-        const second = response.filter(x => editDistance(x.title.toString(), item.toString()) < 10);
+        const first = response.filter(x => x.title.toLowerCase().includes(item.toString().toLowerCase()));
+        const second = response.filter(x => editDistance(x.title.toString().toLowerCase(), item.toString().toLowerCase()) < 10);
 
         const artworks = merge(first, second);
 
