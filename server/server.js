@@ -65,6 +65,16 @@ app.get('/api/homepage/artworks', async (req, res) => {
     try {
         const db = await connectToDatabase();
 
+        const artworkResults = await db.collection('artworks').aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userid',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            }
+        ]).toArray();
 
         res.status(200).json({ artworks: artworkResults });
     } catch (error) {
