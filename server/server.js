@@ -64,16 +64,7 @@ app.get('/api/getusers', async (req, res) => {
 app.get('/api/homepage/artworks', async (req, res) => {
     try {
         const db = await connectToDatabase();
-        const artworkResults = await db.collection('artworks').aggregate([
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'userid',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            }
-        ]).toArray();
+
 
         res.status(200).json({ artworks: artworkResults });
     } catch (error) {
@@ -298,12 +289,13 @@ app.post('/api/:artworkId/comments', async (req, res) => {
    try {
        const artworkId = req.params.artworkId;
        const { text, userId } = req.body;
-       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
        const db = await connectToDatabase();
-       await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, username: user.name, text: text });
+       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+       await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, user: user, text: text });
        res.status(200).json({ message: 'Comment added to the artwork successfully' });
    } catch(e) {
-       res.status(500).json({ message: 'Comment error, not successfully added' })
+       console.log(e);
+       res.status(500).json({ message: `Comment error, not successfully added ${e}` })
    }
 });
 
@@ -625,7 +617,16 @@ app.get('/search/:item', async (req, res) => {
     try {
         const item = req.params.item;
         const db = await connectToDatabase();
-        const response = await db.collection('artworks').find({}).toArray();
+        const response = await db.collection('artworks').aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userid',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            }
+        ]).toArray();
         const first = response.filter(x => x.title.toLowerCase().includes(item.toString().toLowerCase()));
         const second = response.filter(x => editDistance(x.title.toString().toLowerCase(), item.toString().toLowerCase()) < 10);
 
