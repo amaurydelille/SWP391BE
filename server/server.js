@@ -650,5 +650,30 @@ app.get('/search/:item', async (req, res) => {
     }
 });
 
+// Get Users Liked and Saved Artwork API
+app.get('/api/users/:userId/saved', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const savedArtworks = await db.collection('saved').find({userId: userId}).toArray();
+
+        res.status(200).json({ savedArtworks: savedArtworks });
+    } catch (e) {
+        res.status(500).json({ message: `Could not get saved artworks: ${e}` });
+    }
+});
+
+app.get('/api/users/:userId/cart', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const cartArtworks = await db.collection('carts_items').find({ userId: userId }).toArray();
+
+        res.status(200).json({ cartArtworks: cartArtworks });
+        console.log(cartArtworks);
+    } catch (e) {
+        res.status(500).json({ message: `Could not get saved artworks: ${e}` });
+    }
+});
 
 module.exports = {app, userResults, artworkResults};
