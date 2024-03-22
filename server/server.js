@@ -347,6 +347,22 @@ app.get('/api/:userId/saved', async (req, res) => {
     }
 });
 
+//Unsaved Artwork
+app.delete('/api/users/:userId/saved/:artworkId', async (req, res) => {
+    const userId = req.params.userId;
+    const artworkId = req.params.artworkId;
+
+    try {
+        const db = await connectToDatabase();
+        await db.collection('saved').deleteOne({ userId: new ObjectId(userId), artworkId: new ObjectId(artworkId) });
+        
+        res.status(200).json({ message: 'Artwork unsaved successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error unsaving artwork: ${e}` });
+    }
+});
+
+
 //Like artwork API
 app.post('/api/artworks/:artworkId/likes', async (req, res) => {
     const artworkId = req.params.artworkId;
@@ -396,6 +412,38 @@ app.get('/api/artworks/:artworkId/likes', async (req, res) => {
         res.status(200).json({ likes: likesCount, message: 'Likes count retrieved successfully' });
     } catch (e) {
         res.status(500).json({ message: `Likes count could not be retrieve: ${e}` });
+    }
+});
+
+//Unliked Artwork
+app.delete('/api/artworks/:artworkId/likes/:userId', async (req, res) => {
+    const artworkId = req.params.artworkId;
+    const userId = req.params.userId;
+
+    try {
+        const db = await connectToDatabase();
+        const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+
+        if (!artwork) {
+            return res.status(404).json({ message: 'Artwork not found' });
+        }
+
+        if (artwork.likes === 0) {
+            return res.status(400).json({ message: 'Artwork has no likes to unlike' });
+        }
+
+        // Update likes count
+        artwork.likes = Math.max(0, artwork.likes - 1);
+
+        // Update artwork document
+        await db.collection('artworks').updateOne(
+            { _id: new ObjectId(artworkId) },
+            { $set: { likes: artwork.likes } }
+        );
+
+        res.status(200).json({ message: 'Artwork unliked successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Error unliking artwork: ${e}` });
     }
 });
 
