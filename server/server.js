@@ -720,11 +720,20 @@ app.get('/api/users/:userId/cart', async (req, res) => {
         const db = await connectToDatabase();
         const cartArtworks = await db.collection('carts_items').find({ userId: userId }).toArray();
 
-        res.status(200).json({ cartArtworks: cartArtworks });
-        console.log(cartArtworks);
+        let cartWithDetails = [];
+
+        for (const cartItem of cartArtworks) {
+            const artworkDetails = await db.collection('artworks').findOne({ _id: new ObjectId(cartItem.artworkId) });
+            cartItem.artworkDetails = artworkDetails;
+            cartWithDetails.push(cartItem);
+        }
+
+        res.status(200).json({ cartArtworks: cartWithDetails });
+        console.log(cartWithDetails);
     } catch (e) {
         res.status(500).json({ message: `Could not get saved artworks: ${e}` });
     }
 });
+
 
 module.exports = {app, userResults, artworkResults};
