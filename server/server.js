@@ -364,8 +364,9 @@ app.delete('/api/users/:userId/saved/:artworkId', async (req, res) => {
 
 
 //Like artwork API
-app.post('/api/artworks/:artworkId/likes', async (req, res) => {
+app.post('/api/users/:userId/artworks/:artworkId/likes', async (req, res) => {
     const artworkId = req.params.artworkId;
+    const userId = req.params.userId;
 
     try {
         const db = await connectToDatabase();
@@ -385,6 +386,8 @@ app.post('/api/artworks/:artworkId/likes', async (req, res) => {
             { _id: new ObjectId(artworkId) },
             { $set: { likes: artwork.likes } }
         );
+
+        await db.collection('saved').insertOne({ userId: userId, artworkId: artworkId });
 
         //res.status(200).json({ likes: artwork.likes, message: 'Artwork liked successfully' });
         res.status(200).json({ message: 'Artwork liked successfully' });
