@@ -519,7 +519,7 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
    try {
        const userId = req.params.userId;
        const db = await connectToDatabase();
-       await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
+       await db.collection('users').deleteOne({ _id: new ObjectId(userId) });   
 
        res.status(200).json({ message: 'User deleted successfully' });
    }  catch (e) {
@@ -527,21 +527,21 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
    }
 });
 
-// Edit Profile API
 app.put('/api/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
-        const { name: name, mail: mail, password: password, picture: picture } = req.body;
-        const user = [ name, mail, password, picture ];
+        const { name, mail, password, picture } = req.body;
+        const user = { name, mail, password, picture };
 
-        user.filter(n => n);
+        // Filter out undefined values from user object
+        Object.keys(user).forEach(key => user[key] === undefined && delete user[key]);
 
         const db = await connectToDatabase();
-        await db.collection('users').update({ _id: new ObjectId(userId) }, JSON.stringify(user));
+        await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: user });
 
-        res.status(200).json({ message: 'User could be updated successfully' });
+        res.status(200).json({ message: 'User updated successfully' });
     } catch (e) {
-        res.Status(500).json({ message: `Could not updated the user: ${e}` });
+        res.status(500).json({ message: `Could not update the user: ${e}` });
     }
 });
 
