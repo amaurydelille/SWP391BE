@@ -6,7 +6,7 @@ const session = require('express-session');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
-const { editDistance, merge} = require('../services');
+const { editDistance, merge, generatePassword } = require('../services');
 
 const app = express();
 const port = 5000;
@@ -14,6 +14,18 @@ const cors = require('cors');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../swagger-output.json')
+
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // Use `true` for port 465, `false` for all other ports
+    auth: {
+        user: "secondcyclecontact@gmail.com",
+        pass: "ujbo ebkb cacl wlir",
+    },
+});
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
@@ -226,7 +238,7 @@ app.delete('/api/users/:userId/cart/:artworkId', async (req, res) => {
 
     try {
         const db = await connectToDatabase();
-        await db.collection('artworks').deleteOne({ _id: new ObjectId(artworkId) });
+        await db.collection('carts_items').deleteOne({ _id: new ObjectId(artworkId) });
         res.status(200).json({ message: 'Artwork deleted from the cart successfully' });
     } catch (error) {
         console.error('Error deleting the artwork from the cart:', error);
@@ -262,7 +274,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Change password
-app.post('/api/changePassword', async (req, res) => {
+app.post('/api/changepassword', async (req, res) => {
     const { email, currentPassword, newPassword } = req.body;
 
     try {
@@ -293,6 +305,28 @@ app.post('/api/changePassword', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+app.post('/api/send', async (req, res) => {
+    try {
+        const mail = req.body.mail;
+        const password = generatePassword();
+        console.log('mail', mail);
+
+        const info = await transporter.sendMail({
+            from: 'secondcyclecontact@gmail.com',
+            to: mail,
+            subject: "Hello here is your new password",
+            text: "Do not share this password with anybody: ",
+            html: "<b>Votre mot de passe : " + password + "</b>",
+        });
+
+        res.status(200).send("Password sent successfully!");
+    } catch (error) {
+        console.error("Error sending email:", error);
+        res.status(500).send("Error sending email: " + error.message);
+    }
+});
+
 
 
 app.post('/api/:artworkId/comments', async (req, res) => {
