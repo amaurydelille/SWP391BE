@@ -308,18 +308,23 @@ app.post('/api/changepassword', async (req, res) => {
 
 app.post('/api/send', async (req, res) => {
     try {
-        const mail = req.body.mail;
-        const password = generatePassword();
-        console.log('mail', mail);
+        const data = req.body;
+        const password = generatePassword(10);
 
         const info = await transporter.sendMail({
             from: 'secondcyclecontact@gmail.com',
-            to: mail,
+            to: data.mail,
             subject: "Hello here is your new password",
             text: "Do not share this password with anybody: ",
             html: "<b>Votre mot de passe : " + password + "</b>",
         });
 
+        const db = connectToDatabase();
+        await db.collection('users').updateOne({
+            mail: data.mail
+        });
+
+        console.log("Mail sent successfully");
         res.status(200).send("Password sent successfully!");
     } catch (error) {
         console.error("Error sending email:", error);
