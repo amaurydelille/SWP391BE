@@ -205,7 +205,7 @@ app.put('/api/artworks/:artworkId', async (req, res) => {
     }
 });
 
-app.post('api/users/:userId/cart/:artworkId', async (req, res) => {
+app.post('/api/users/:userId/cart/:artworkId', async (req, res) => {
     const userId = req.params.userId;
     const artworkId = req.params.artworkId;
     const cartItem = { userId, artworkId };
@@ -220,7 +220,7 @@ app.post('api/users/:userId/cart/:artworkId', async (req, res) => {
     }
 });
 
-app.delete('api/users/:userId/cart/:artworkId', async (req, res) => {
+app.delete('/api/users/:userId/cart/:artworkId', async (req, res) => {
     const userId = req.params.userId;
     const artworkId = req.params.artworkId;
 
