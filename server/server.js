@@ -604,7 +604,7 @@ app.get('/api/users/:userId/followers', async (req, res) => {
     try {
         const userId = req.params.userId;
         const db = await connectToDatabase();
-        const followers = await db.collection('follows').find({ followedUser: new ObjectId(userId) }).toArray();
+        const followers = await db.collection('follows').find({ followedUser: userId }).toArray();
 
         res.status(200).json({ followers: followers.length });
     } catch (e) {
