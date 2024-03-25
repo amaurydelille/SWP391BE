@@ -347,15 +347,19 @@ app.post('/api/:artworkId/comments', async (req, res) => {
 });
 
 app.get('/api/:artworkId/comments', async (req, res) => {
-   try {
-       const artworkId = req.params.artworkId;
-       const db = await connectToDatabase();
-       const comments = await db.collection('comments').find({ artworkId: artworkId }).toArray();
-       res.status(200).json({comments: comments});
-   } catch (e) {
-       res.status(500).json({ message: 'Comment error, not successfully added', error: e})
-   }
+    try {
+        const artworkId = req.params.artworkId;
+        const db = await connectToDatabase();
+
+        let comments = await db.collection('comments').find({ artworkId: artworkId }).toArray();
+        comments = comments.filter(comment => comment.text && comment.text.trim() !== "");
+
+        res.status(200).json({ comments: comments });
+    } catch (e) {
+        res.status(500).json({ message: 'Comment error, not successfully added', error: e })
+    }
 });
+
 
 // Save Artwork API
 app.post('/api/:userId/saved', async (req, res) => {
