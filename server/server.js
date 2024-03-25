@@ -160,7 +160,7 @@ app.post('/api/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+
 
         const db = await connectToDatabase();
         const mailCheck = await db.collection('users').findOne({email: email});
@@ -319,11 +319,9 @@ app.post('/api/send', async (req, res) => {
             html: "<b>Votre mot de passe : " + password + "</b>",
         });
 
-        const db = connectToDatabase();
-        await db.collection('users').updateOne({
-            mail: data.mail
-        });
-
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const db = await connectToDatabase();
+        const user = await db.collection('users').updateOne({ email: data.mail }, { $set: { password: hashedPassword } });
         console.log("Mail sent successfully");
         res.status(200).send("Password sent successfully!");
     } catch (error) {
@@ -331,6 +329,7 @@ app.post('/api/send', async (req, res) => {
         res.status(500).send("Error sending email: " + error.message);
     }
 });
+
 
 
 
