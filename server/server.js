@@ -810,5 +810,18 @@ app.get('/api/users/:userId/saved/artworks/:artworkId', async (req, res) => {
     }
 });
 
+// PAYMENT APIS
+app.delete('api/payment/:artworkId', async (req, res) => {
+    try {
+        const artworkId = req.params.artworkId;
+
+        const db = await connectToDatabase();
+        await db.collection('artworks').deleteOne({ _id: new ObjectId(artworkId) });
+
+        res.status(200).json({ message: 'Payment made successfully' });
+    } catch (e) {
+        res.status(500).json({ message: `Payment was not made: ${e}` });
+    }
+});
 
 module.exports = {app, userResults, artworkResults};
