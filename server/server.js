@@ -726,7 +726,7 @@ app.get('/search/:item', async (req, res) => {
             }
         ]).toArray();
         const first = response.filter(x => x.title.toLowerCase().includes(item.toString().toLowerCase()));
-        const second = response.filter(x => editDistance(x.title.toString().toLowerCase(), item.toString().toLowerCase()) < 10);
+        const second = response.filter(x => editDistance(x.title.toString().toLowerCase(), item.toString().toLowerCase()) < 5);
 
         const artworks = merge(first, second);
 
@@ -811,12 +811,12 @@ app.get('/api/users/:userId/saved/artworks/:artworkId', async (req, res) => {
 });
 
 // PAYMENT APIS
-app.delete('/api/payment/:artworkId', async (req, res) => {
+app.delete('/api/payment/:userId', async (req, res) => {
     try {
-        const artworkId = req.params.artworkId;
+        const userId = req.params.userId;
 
         const db = await connectToDatabase();
-        await db.collection('artworks').deleteOne({ _id: new ObjectId(artworkId) });
+        await db.collection('carts_item').deleteMany({ _id: new ObjectId(userId) });
 
         res.status(200).json({ message: 'Payment made successfully' });
     } catch (e) {
