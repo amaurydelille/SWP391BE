@@ -811,7 +811,7 @@ app.get('/api/users/:userId/saved/artworks/:artworkId', async (req, res) => {
 });
 
 // PAYMENT APIS
-app.delete('api/payment/:artworkId', async (req, res) => {
+app.delete('/api/payment/:artworkId', async (req, res) => {
     try {
         const artworkId = req.params.artworkId;
 
