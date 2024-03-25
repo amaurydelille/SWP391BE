@@ -16,6 +16,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../swagger-output.json')
 
 const nodemailer = require("nodemailer");
+const {connect} = require("mongodb/src/cmap/connect");
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -595,6 +596,19 @@ app.post('/api/users/:userId/follow/:userFollowedId', async (req, res) => {
         res.status(200).json({ message: ('Follow could be inserted successfully') });
     } catch (e) {
         res.status(500).json({ message: `Could not insert follow: ${e}` });
+    }
+});
+
+// Get follower number
+app.get('/api/users/:userId/followers', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const followers = await db.collection('follows').find({ followedUser: new ObjectId(userId) }).toArray();
+
+        res.status(200).json({ followers: followers.length });
+    } catch (e) {
+        res.status(500).json({ message: `Could not get number of followers: ${e}` });
     }
 });
 
