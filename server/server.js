@@ -773,5 +773,43 @@ app.get('/api/users/:userId/cart', async (req, res) => {
     }
 });
 
+app.get('/api/users/:userId/cart/artworks/:artworkId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const artworkId = req.params.artworkId;
+
+        const db = await connectToDatabase();
+        const added = await db.collection('carts_items').find({ userId: userId, artworkId: artworkId }).toArray();
+
+        if (added.length > 0) {
+            res.status(200).json({ added: true });
+        } else {
+            res.status(200).json({ added: false });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Error checking if artwork is added to cart' });
+    }
+});
+
+app.get('/api/users/:userId/saved/artworks/:artworkId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const artworkId = req.params.artworkId;
+
+        const db = await connectToDatabase();
+        const added = await db.collection('saved').find({ userId: userId, artworkId: artworkId }).toArray();
+
+        if (added.length > 0) {
+            res.status(200).json({ added: true });
+        } else {
+            res.status(200).json({ added: false });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Error checking if artwork is added to cart' });
+    }
+});
+
 
 module.exports = {app, userResults, artworkResults};
