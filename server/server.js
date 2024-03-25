@@ -837,13 +837,15 @@ app.delete('/api/payment/:userId', async (req, res) => {
         const db = await connectToDatabase();
 
         const items = await db.collection('carts_items').find({ userId: userId }).toArray();
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
         for (const item of items) {
             const artwork = await db.collection('artworks').findOne({_id: new ObjectId(item.artworkId)});
             await db.collection('transactions').insertOne({
                 userId: userId,
                 artworkId: item.artworkId,
-                artwork: artwork
+                artwork: artwork,
+                user: user
             });
 
             await db.collection('carts_items').deleteMany({userId: userId});
