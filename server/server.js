@@ -16,7 +16,6 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../swagger-output.json')
 
 const nodemailer = require("nodemailer");
-const {connect} = require("mongodb/src/cmap/connect");
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -574,15 +573,16 @@ app.put('/api/users/:userId', async (req, res) => {
         const { name, mail, password, picture } = req.body;
         const user = { name, mail, password, picture };
 
-        // Filter out undefined values from user object
         Object.keys(user).forEach(key => user[key] === undefined && delete user[key]);
 
         const db = await connectToDatabase();
         await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: user });
+        console.log('put user', user);
 
         res.status(200).json({ message: 'User updated successfully' });
     } catch (e) {
         res.status(500).json({ message: `Could not update the user: ${e}` });
+        console.log(e);
     }
 });
 
