@@ -831,12 +831,41 @@ app.delete('/api/payment/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const db = await connectToDatabase();
-        await db.collection('carts_item').deleteMany({ _id: new ObjectId(userId) });
+
+        const items = await db.collection('carts_items').find({ userId: userId }).toArray();
+
+        for (const item of items) {
+            const artwork = await db.collection('artworks').findOne({_id: new ObjectId(item.artworkId)});
+            await db.collection('transactions').insertOne({
+                userId: userId,
+                artworkId: item.artworkId,
+                artwork: artwork
+            });
+
+            await db.collection('carts_items').deleteMany({userId: userId});
+        }
 
         res.status(200).json({ message: 'Payment made successfully' });
     } catch (e) {
         res.status(500).json({ message: `Payment was not made: ${e}` });
     }
 });
+
+
+
+// API TO SEE WHO BOUGHT AN ARTWORK (CREATOR POV)
+app.get('/api/users/:userId/sold/', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const db = await connectToDatabase();
+        const transactions = await db.collection('transactions').find({ 'artwork.userid': new ObjectId(userId) }).toArray();
+
+        res.status(200).json({ transactions: transactions });
+    } catch (error) {
+        console.log('error', error);
+        res.status(500).json({ message: `Une erreur s'est produite lors de la récupération des transactions : ${error}` });
+    }
+});
+
 
 module.exports = {app, userResults, artworkResults};
