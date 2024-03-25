@@ -116,7 +116,7 @@ app.put('/api/users/:userId/artworks/:artworkId', async (req, res) => {
     try {
         const { _id, title, description, typeDesign, price } = req.body;
         const artwork = [ title, description, typeDesign, price ];
-        artwork.filter(n => n);
+        Object.keys(artwork).forEach(key => artwork[key] === undefined && delete artwork[key]);
         const db = await connectToDatabase();
         await db.collection('artworks').update({_id: new ObjectId(_id)}, artwork);
 
@@ -208,7 +208,7 @@ app.put('/api/artworks/:artworkId', async (req, res) => {
         const newArtworkData = req.body;
         const artworkId = req.params.artworkId;
         const db = await connectToDatabase();
-        await db.collection('artworks').updateOne({ _id: new ObjectId(artworkId) }, { newArtworkData });
+        await db.collection('artworks').update({ _id: new ObjectId(artworkId) }, { newArtworkData });
 
         res.status(200).json({ message: 'Artwork data updated successfully' });
     } catch (e) {
