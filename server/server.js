@@ -131,7 +131,7 @@ app.get('/api/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         const db = await connectToDatabase();
-        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) }).toArray();
+        const user = await db.collection('users').find({ _id: new ObjectId(userId) }).toArray();
         res.status(200).json({ user : user });
     } catch (e) {
         res.status(500).json({ message: `Error getting the user: ${e}` });
