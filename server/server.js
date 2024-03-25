@@ -571,7 +571,8 @@ app.put('/api/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         const { name, mail, password, picture } = req.body;
-        const user = { name, mail, password, picture };
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = { name, mail, hashedPassword, picture };
 
         Object.keys(user).forEach(key => user[key] === undefined && delete user[key]);
 
