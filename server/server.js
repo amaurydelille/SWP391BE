@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const { editDistance, merge, generatePassword } = require('../services');
+const { format } = require('date-fns');
 
 const app = express();
 const port = 5000;
@@ -340,11 +341,13 @@ app.post('/api/send', async (req, res) => {
 
 app.post('/api/:artworkId/comments', async (req, res) => {
    try {
+       const date = new Date();
+       const actualDate = format(date, 'dd/MM/yyyy - HH\'h\'mm');
        const artworkId = req.params.artworkId;
        const { text, userId } = req.body;
        const db = await connectToDatabase();
        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-       await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, user: user, text: text });
+       await db.collection('comments').insertOne({ artworkId: artworkId, userId: userId, user: user, text: text, date: actualDate });
        res.status(200).json({ message: 'Comment added to the artwork successfully' });
    } catch(e) {
        console.log(e);
