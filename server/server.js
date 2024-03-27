@@ -186,6 +186,7 @@ app.post('/api/addartwork', async (req, res) => {
     try {
         const { userid, title, description, typeDesign, price, image } = req.body;
         const db = await connectToDatabase();
+        await db.collection('users').updateOne({ _id: new ObjectId(userid) }, { $set: {role: 'creator'}});
         const artwork = { userid: new ObjectId(userid), title: title, description: description, typeDesign: typeDesign, price: price, image: image, likes: 0 };
         const result = await db.collection('artworks').insertOne(artwork);
         const insertedArtwork = await db.collection('artworks').findOne({ _id: result.insertedId });
@@ -579,9 +580,9 @@ app.delete('/api/admin/users/:userId', async (req, res) => {
 app.put('/api/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
-        const { name, mail, password, picture } = req.body;
+        const { name, email, password, picture } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = { name, mail, hashedPassword, picture };
+        const user = { name, email, hashedPassword, picture };
 
         Object.keys(user).forEach(key => user[key] === undefined && delete user[key]);
 
