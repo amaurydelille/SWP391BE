@@ -844,7 +844,8 @@ app.delete('/api/payment/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const db = await connectToDatabase();
-
+        const date = new Date();
+        const actualDate = format(date, 'dd/MM/yyyy - HH\'h\'mm');
         const items = await db.collection('carts_items').find({ userId: userId }).toArray();
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
@@ -854,7 +855,8 @@ app.delete('/api/payment/:userId', async (req, res) => {
                 userId: userId,
                 artworkId: item.artworkId,
                 artwork: artwork,
-                user: user
+                user: user,
+                date: actualDate
             });
 
             await db.collection('carts_items').deleteMany({userId: userId});
