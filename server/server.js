@@ -148,6 +148,7 @@ app.get("/api/users/:userId", async (req, res) => {
       .toArray();
     res.status(200).json({ user: user });
   } catch (e) {
+    console.log(e);
     res.status(500).json({ message: `Error getting the user: ${e}` });
   }
 });
@@ -1197,6 +1198,33 @@ app.post("/api/users/:userId/artworks/:artworkId/unlike", async (req, res) => {
     res.status(200).json({ message: "Artwork unliked successfully" });
   } catch (e) {
     res.status(500).json({ message: `Could not unlike artwork: ${e}` });
+  }
+});
+
+// Amaury
+// Get every comments of a user
+app.get('/api/users/:userId/comments', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const db = await connectToDatabase();
+    const comments = await db.collection('comments').find({ userId: userId }).toArray();
+
+    res.status(200).json({ comments: comments });
+  } catch (e) {
+    res.status(500).json({ message: `Error while getting comments: ${e}` });
+  }
+});
+
+// Delete a comment
+app.delete('/api/comment/:commentId', async (req, res) => {
+  try {
+    const commentId = req.params.commentId;
+    const db = await connectToDatabase();
+    await db.collection('comments').deleteOne({_id: new ObjectId(commentId)});
+
+    res.status(200).json({ message: 'Comment deleted successfully' });
+  } catch (e) {
+    res.status(500).json({ message: `Could not delete the comment "${e}` });
   }
 });
 
