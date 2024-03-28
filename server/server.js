@@ -173,7 +173,7 @@ app.post('/api/register', async (req, res) => {
         if (mailCheck) {
             res.status(500).send({register: false});
         } else {
-            await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience' });
+            await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience', balance: 0 });
             res.status(200).send({register: true});
         }
 
@@ -601,11 +601,11 @@ app.put('/api/users/:userId', async (req, res) => {
 });
 
 // Follow creator
-app.post('/api/users/:userId/follow/:userFollowedId', async (req, res) => {
+app.post('/api/users/:userId/follow/:creatorId', async (req, res) => {
     try {
-        const { userId, userFollowedId } = req.params;
+        const { userId, creatorId } = req.params;
         const db = await connectToDatabase();
-        await db.collection('follows').insertOne({ userId: userId, followedUser: userFollowedId });
+        await db.collection('follows').insertOne({ userId: userId, creatorId: creatorId });
 
         res.status(200).json({ message: ('Follow could be inserted successfully') });
     } catch (e) {
@@ -856,7 +856,7 @@ app.delete('/api/payment/:userId', async (req, res) => {
                 artworkId: item.artworkId,
                 artwork: artwork,
                 user: user,
-                date: actualDate
+                transac_time: actualDate
             });
 
             await db.collection('carts_items').deleteMany({userId: userId});
