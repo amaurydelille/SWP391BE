@@ -183,7 +183,7 @@ app.post("/api/register", async (req, res) => {
     if (mailCheck) {
       res.status(500).send({register: false});
     } else {
-      await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience', balance: 0 });
+      await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience', balance: 0, follow: 0 });
       res.status(200).send({register: true});
     }
   } catch (error) {
@@ -708,7 +708,7 @@ app.put("/api/users/:userId", async (req, res) => {
     const userId = req.params.userId;
     const { name, email, password, picture } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { name, email, hashedPassword, picture };
+    const user = { name: name, email: email, password: hashedPassword, picture };
 
     Object.keys(user).forEach(
       (key) => user[key] === undefined && delete user[key]
