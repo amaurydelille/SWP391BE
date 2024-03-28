@@ -181,15 +181,13 @@ app.post("/api/register", async (req, res) => {
     const mailCheck = await db.collection("users").findOne({ email: email });
 
     if (mailCheck) {
-      res.status(500).send({ register: false });
+      res.status(500).send({register: false});
     } else {
-      await db
-        .collection("users")
-        .insertOne({ name, email, password: hashedPassword, role: "audience" });
-      res.status(200).send({ register: true });
+      await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience', balance: 0 });
+      res.status(200).send({register: true});
     }
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     res.status(500).send("Error registering user");
   }
 });
@@ -787,14 +785,12 @@ app.put("/api/users/:userId", async (req, res) => {
 });
 
 // Follow creator
-app.post("/api/users/:userId/follow/:userFollowedId", async (req, res) => {
-  try {
-    const { userId, userFollowedId } = req.params;
-    const db = await connectToDatabase();
-    await db
-      .collection("follows")
-      .insertOne({ userId: userId, followedUser: userFollowedId });
 
+app.post('/api/users/:userId/follow/:creatorId', async (req, res) => {
+    try {
+      const { userId, creatorId } = req.params;
+      const db = await connectToDatabase();
+      await db.collection('follows').insertOne({ userId: userId, creatorId: creatorId });
     res.status(200).json({ message: "Follow could be inserted successfully" });
   } catch (e) {
     res.status(500).json({ message: `Could not insert follow: ${e}` });
@@ -1114,17 +1110,14 @@ app.delete("/api/payment/:userId", async (req, res) => {
     const user = await db
       .collection("users")
       .findOne({ _id: new ObjectId(userId) });
-
     for (const item of items) {
-      const artwork = await db
-        .collection("artworks")
-        .findOne({ _id: new ObjectId(item.artworkId) });
-      await db.collection("transactions").insertOne({
+      const artwork = await db.collection('artworks').findOne({_id: new ObjectId(item.artworkId)});
+      await db.collection('transactions').insertOne({
         userId: userId,
         artworkId: item.artworkId,
         artwork: artwork,
         user: user,
-        date: actualDate,
+        transac_time: actualDate
       });
 
       await db.collection("carts_items").deleteMany({ userId: userId });
