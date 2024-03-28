@@ -248,6 +248,20 @@ app.put("/api/artworks/:artworkId", async (req, res) => {
   }
 });
 
+// app.post("/api/users/:userId/cart/:artworkId", async (req, res) => {
+//   const userId = req.params.userId;
+//   const artworkId = req.params.artworkId;
+//   const cartItem = { userId, artworkId };
+
+//   try {
+//     const db = await connectToDatabase();
+//     await db.collection("carts_items").insertOne(cartItem);
+//     res.status(200).json({ message: "Artwork added to the cart succesfuly" });
+//   } catch (error) {
+//     console.error("Error adding the artwork to your cart:", error);
+//     res.status(500).send("Error adding the artwork to your cart");
+//   }
+// });
 app.post("/api/users/:userId/cart/:artworkId", async (req, res) => {
   const userId = req.params.userId;
   const artworkId = req.params.artworkId;
@@ -255,14 +269,69 @@ app.post("/api/users/:userId/cart/:artworkId", async (req, res) => {
 
   try {
     const db = await connectToDatabase();
-    await db.collection("carts_items").insertOne(cartItem);
-    res.status(200).json({ message: "Artwork added to the cart succesfuly" });
+    if (await checkExistsArtworkInTransaction(userId, artworkId)) {
+      res
+        .status(400)
+        .send("You cannot add to cart your artwork that you already bought");
+    } else if (await checkExistsArtworkInCartItem(userId, artworkId)) {
+      res
+        .status(400)
+        .send(
+          "You cannot add to cart your artwork that you already exists in shopping cart"
+        );
+    } else {
+      await db.collection("carts_items").insertOne(cartItem);
+      res.status(200).json({ message: "Artwork added to the cart succesfuly" });
+    }
   } catch (error) {
     console.error("Error adding the artwork to your cart:", error);
     res.status(500).send("Error adding the artwork to your cart");
   }
 });
 
+// Dat work
+async function checkExistsArtworkInTransaction(userId, artworkId) {
+  try {
+    const db = await connectToDatabase();
+    const artworkCollection = db.collection("transactions");
+
+    const artwork = await artworkCollection.findOne({
+      artworkId: artworkId,
+      userId: userId,
+    });
+
+    if (artwork) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Error checking artwork existence in transaction:", error);
+    throw error;
+  }
+}
+
+// Dat work
+async function checkExistsArtworkInCartItem(userId, artworkId) {
+  try {
+    const db = await connectToDatabase();
+    const artworkCollection = db.collection("carts_items");
+
+    const artwork = await artworkCollection.findOne({
+      artworkId: artworkId,
+      userId: userId,
+    });
+
+    if (artwork) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Error checking artwork existence in transaction:", error);
+    throw error;
+  }
+}
 app.delete("/api/users/:userId/cart/:artworkId", async (req, res) => {
   const userId = req.params.userId;
   const artworkId = req.params.artworkId;
@@ -304,14 +373,12 @@ app.post("/api/login", async (req, res) => {
         { expiresIn: "1h" }
       );
       console.log(JSON.stringify(user._id));
-      return res
-        .status(200)
-        .json({
-          message: "Login successful",
-          accessToken: accessToken,
-          user: user,
-          admin: admin,
-        });
+      return res.status(200).json({
+        message: "Login successful",
+        accessToken: accessToken,
+        user: user,
+        admin: admin,
+      });
     } else {
       return res
         .status(401)
@@ -394,15 +461,13 @@ app.post("/api/:artworkId/comments", async (req, res) => {
     const user = await db
       .collection("users")
       .findOne({ _id: new ObjectId(userId) });
-    await db
-      .collection("comments")
-      .insertOne({
-        artworkId: artworkId,
-        userId: userId,
-        user: user,
-        text: text,
-        date: actualDate,
-      });
+    await db.collection("comments").insertOne({
+      artworkId: artworkId,
+      userId: userId,
+      user: user,
+      text: text,
+      date: actualDate,
+    });
     res
       .status(200)
       .json({ message: "Comment added to the artwork successfully" });
@@ -459,12 +524,10 @@ app.get("/api/:userId/saved", async (req, res) => {
       .find({ userId: new ObjectId(userId) })
       .toArray();
 
-    res
-      .status(200)
-      .json({
-        savedArtworks: savedArtworks,
-        message: "Saved artworks listed successfully",
-      });
+    res.status(200).json({
+      savedArtworks: savedArtworks,
+      message: "Saved artworks listed successfully",
+    });
   } catch (e) {
     res
       .status(500)
@@ -479,12 +542,10 @@ app.delete("/api/users/:userId/saved/:artworkId", async (req, res) => {
 
   try {
     const db = await connectToDatabase();
-    await db
-      .collection("saved")
-      .deleteOne({
-        userId: new ObjectId(userId),
-        artworkId: new ObjectId(artworkId),
-      });
+    await db.collection("saved").deleteOne({
+      userId: new ObjectId(userId),
+      artworkId: new ObjectId(artworkId),
+    });
 
     res.status(200).json({ message: "Artwork unsaved successfully" });
   } catch (e) {
@@ -549,12 +610,10 @@ app.get("/api/artworks/:artworkId/likes", async (req, res) => {
     // Get the current 'likes' count
     const likesCount = artwork.likes || 0;
 
-    res
-      .status(200)
-      .json({
-        likes: likesCount,
-        message: "Likes count retrieved successfully",
-      });
+    res.status(200).json({
+      likes: likesCount,
+      message: "Likes count retrieved successfully",
+    });
   } catch (e) {
     res
       .status(500)
@@ -638,12 +697,10 @@ app.get("/api/artworks/:artworkId", async (req, res) => {
       .find({})
       .limit(50)
       .toArray();
-    res
-      .status(200)
-      .json({
-        homepageArtworks,
-        message: `Sending artwork to home page successfully`,
-      });
+    res.status(200).json({
+      homepageArtworks,
+      message: `Sending artwork to home page successfully`,
+    });
   } catch (e) {
     res.status(500).json({ message: `Artwork could not be send: ${e}` });
   }
@@ -1092,11 +1149,9 @@ app.get("/api/users/:userId/sold/", async (req, res) => {
     res.status(200).json({ transactions: transactions });
   } catch (error) {
     console.log("error", error);
-    res
-      .status(500)
-      .json({
-        message: `Une erreur s'est produite lors de la récupération des transactions : ${error}`,
-      });
+    res.status(500).json({
+      message: `Une erreur s'est produite lors de la récupération des transactions : ${error}`,
+    });
   }
 });
 
