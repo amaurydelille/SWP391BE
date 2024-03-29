@@ -846,7 +846,7 @@
         }
       }
     },
-    "/api/users/{userId}/follow/{userFollowedId}": {
+    "/api/users/{userId}/follow/{creatorId}": {
       "post": {
         "description": "",
         "parameters": [
@@ -857,7 +857,7 @@
             "type": "string"
           },
           {
-            "name": "userFollowedId",
+            "name": "creatorId",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1301,6 +1301,48 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/users/{userId}/comments": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/comment/{commentId}": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
