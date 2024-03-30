@@ -148,7 +148,6 @@ app.get("/api/users/:userId", async (req, res) => {
       .toArray();
     res.status(200).json({ user: user });
   } catch (e) {
-    console.log(e);
     res.status(500).json({ message: `Error getting the user: ${e}` });
   }
 });
@@ -182,13 +181,19 @@ app.post("/api/register", async (req, res) => {
     const mailCheck = await db.collection("users").findOne({ email: email });
 
     if (mailCheck) {
-      res.status(500).send({register: false});
+      res.status(500).send({ register: false });
     } else {
-      await db.collection('users').insertOne({ name, email, password: hashedPassword, role: 'audience', balance: 0, follow: 0 });
-      res.status(200).send({register: true});
+      await db.collection("users").insertOne({
+        name,
+        email,
+        password: hashedPassword,
+        role: "audience",
+        balance: 0,
+      });
+      res.status(200).send({ register: true });
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     res.status(500).send("Error registering user");
   }
 });
@@ -766,7 +771,7 @@ app.put("/api/users/:userId", async (req, res) => {
     const userId = req.params.userId;
     const { name, email, password, picture } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { name: name, email: email, password: hashedPassword, picture };
+    const user = { name, email, hashedPassword, picture };
 
     Object.keys(user).forEach(
       (key) => user[key] === undefined && delete user[key]
@@ -787,11 +792,13 @@ app.put("/api/users/:userId", async (req, res) => {
 
 // Follow creator
 
-app.post('/api/users/:userId/follow/:creatorId', async (req, res) => {
-    try {
-      const { userId, creatorId } = req.params;
-      const db = await connectToDatabase();
-      await db.collection('follows').insertOne({ userId: userId, creatorId: creatorId });
+app.post("/api/users/:userId/follow/:creatorId", async (req, res) => {
+  try {
+    const { userId, creatorId } = req.params;
+    const db = await connectToDatabase();
+    await db
+      .collection("follows")
+      .insertOne({ userId: userId, creatorId: creatorId });
     res.status(200).json({ message: "Follow could be inserted successfully" });
   } catch (e) {
     res.status(500).json({ message: `Could not insert follow: ${e}` });
@@ -1112,13 +1119,15 @@ app.delete("/api/payment/:userId", async (req, res) => {
       .collection("users")
       .findOne({ _id: new ObjectId(userId) });
     for (const item of items) {
-      const artwork = await db.collection('artworks').findOne({_id: new ObjectId(item.artworkId)});
-      await db.collection('transactions').insertOne({
+      const artwork = await db
+        .collection("artworks")
+        .findOne({ _id: new ObjectId(item.artworkId) });
+      await db.collection("transactions").insertOne({
         userId: userId,
         artworkId: item.artworkId,
         artwork: artwork,
         user: user,
-        transac_time: actualDate
+        transac_time: actualDate,
       });
 
       await db.collection("carts_items").deleteMany({ userId: userId });
@@ -1201,31 +1210,39 @@ app.post("/api/users/:userId/artworks/:artworkId/unlike", async (req, res) => {
   }
 });
 
-// Amaury
-// Get every comments of a user
-app.get('/api/users/:userId/comments', async (req, res) => {
+module.exports = { app, userResults, artworkResults };
+
+// Dat work
+app.get("/api/users/:userId/history/", async (req, res) => {
   try {
     const userId = req.params.userId;
     const db = await connectToDatabase();
-    const comments = await db.collection('comments').find({ userId: userId }).toArray();
+    const transactions = await db
+      .collection("transactions")
+      .find({ userId: userId })
+      .toArray();
 
-    res.status(200).json({ comments: comments });
-  } catch (e) {
-    res.status(500).json({ message: `Error while getting comments: ${e}` });
+    var list_art = [];
+    for (const art of transactions) {
+      const art_id = art.artworkId;
+      const artwork = await db
+        .collection("artworks")
+        .findOne({ _id: new ObjectId(art_id) });
+      if (artwork) {
+        const user = await db
+          .collection("users")
+          .findOne({ _id: new ObjectId(artwork.userid) });
+        if (user) {
+          artwork.creator = user.name;
+        }
+        list_art.push(artwork);
+      }
+    }
+
+    res.status(200).json({ list_artwork_of_user: list_art });
+  } catch (error) {
+    res.status(500).json({
+      message: `cannot get history : ${error}`,
+    });
   }
 });
-
-// Delete a comment
-app.delete('/api/comment/:commentId', async (req, res) => {
-  try {
-    const commentId = req.params.commentId;
-    const db = await connectToDatabase();
-    await db.collection('comments').deleteOne({_id: new ObjectId(commentId)});
-
-    res.status(200).json({ message: 'Comment deleted successfully' });
-  } catch (e) {
-    res.status(500).json({ message: `Could not delete the comment "${e}` });
-  }
-});
-
-module.exports = { app, userResults, artworkResults };

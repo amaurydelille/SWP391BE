@@ -1308,33 +1308,12 @@
         }
       }
     },
-    "/api/users/{userId}/comments": {
+    "/api/users/{userId}/history/": {
       "get": {
         "description": "",
         "parameters": [
           {
             "name": "userId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/comment/{commentId}": {
-      "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "commentId",
             "in": "path",
             "required": true,
             "type": "string"
