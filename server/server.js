@@ -1246,3 +1246,31 @@ app.get("/api/users/:userId/history/", async (req, res) => {
     });
   }
 });
+
+// Amaury: GET TRANSACTIONS
+app.get("/api/transactions", async (req, res) => {
+  try {
+    const db = await connectToDatabase();
+    const transactions = await db
+      .collection("transactions")
+      .aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "artwork.userid",
+            foreignField: "_id",
+            as: "creator",
+          },
+        },
+      ])
+      //.find({})
+      .toArray();
+
+    res.status(200).json({ transactions: transactions });
+  } catch (e) {
+    res.status(500).json({ message: `Could not get every transactions: ${e}` });
+    console.log("ERROR GET TRANSACTIONS: ", e);
+  }
+});
+
+module.exports = { app, userResults, artworkResults };
