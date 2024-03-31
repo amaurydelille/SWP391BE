@@ -1273,4 +1273,167 @@ app.get("/api/transactions", async (req, res) => {
   }
 });
 
+// DAT WORK
+app.post("/api/paymentv2/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const db = await connectToDatabase();
+
+    // list artwork in cart_items of user with id: userId
+    const items = await db
+      .collection("carts_items")
+      .find({ userId: userId })
+      .toArray();
+
+    // lấy ra list artworkID trong list cart_items mà userId = userId
+    const artworkIds = items.map((item) => item.artworkId);
+    const artworks = await db
+      .collection("artworks")
+      .find({ _id: { $in: artworkIds.map((id) => new ObjectId(id)) } })
+      .toArray();
+
+    var totalAmount = 0; // tính tổng số tiền của các artwork trong cart-items của user đó
+    for (const item of artworks) {
+      //console.log("price: ", item.price);
+      if (!isNaN(parseFloat(item.price))) {
+        // Chuyển đổi item.price từ chuỗi sang số và cộng vào totalAmount
+        totalAmount += parseFloat(item.price);
+      }
+    }
+
+    if (
+      (await handleDecreaseBalancefromCustomers(db, totalAmount, userId)) ===
+      false
+    ) {
+      res
+        .status(400)
+        .json({ message: `user donnot have enough money to purchase` });
+      return;
+    }
+
+    if (
+      (await handleIncreaseBalanceToCreatorAndDivideToAdmin(db, artworks)) ===
+      false
+    ) {
+      res.status(400).json({
+        message: `something go wrong went increase balance for creator and admin`,
+      });
+      return;
+    }
+
+    await handleCommitTransactionAfterPurchaseSuccess(db, artworks, userId);
+    await handleDelectCartItemAfterTransactionsSuccess(db, userId);
+
+    res
+      .status(200)
+      .json({ message: "Payment made successfully", totalAmount: totalAmount });
+  } catch (e) {
+    res.status(500).json({ message: `Payment was not made: ${e}` });
+  }
+});
+
+async function handleDecreaseBalancefromCustomers(db, totalAmount, userId) {
+  const user = await db
+    .collection("users")
+    .findOne({ _id: new ObjectId(userId) });
+
+  if (!user) {
+    console.log("User not found");
+    return false;
+  }
+
+  const userBalance = parseFloat(user.balance);
+
+  if (isNaN(userBalance)) {
+    console.log("Invalid user balance");
+    return false;
+  }
+
+  if (userBalance < totalAmount) {
+    console.log("user's balance is not enough to purchase");
+    return false;
+  }
+
+  // Tính toán giá trị mới của balance
+  const newBalance = userBalance - totalAmount;
+
+  // Cập nhật giá trị balance mới vào cơ sở dữ liệu
+  const result = await db
+    .collection("users")
+    .updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { balance: newBalance } }
+    );
+
+  if (result.modifiedCount === 1) {
+    console.log("Balance updated successfully");
+    return true;
+  } else {
+    console.log("Failed to update balance");
+    return false;
+  }
+}
+
+async function handleIncreaseBalanceToCreatorAndDivideToAdmin(
+  db,
+  list_artwork_from_cart_item
+) {
+  try {
+    const usersCollection = db.collection("users");
+
+    for (const artwork of list_artwork_from_cart_item) {
+      const userId = artwork.userid;
+      const price = parseInt(artwork.price); // Chuyển giá thành số nguyên
+
+      // Tính toán số tiền cho người dùng và admin
+      const amountForUser = price * 0.9; // 90% cho người dùng
+      const amountForAdmin = price * 0.1; // 10% cho admin
+
+      // Cập nhật balance cho người dùng và admin
+      await usersCollection.updateOne(
+        { _id: userId },
+        { $inc: { balance: amountForUser } }
+      );
+
+      // Cập nhật balance cho admin (giả sử admin có ID là 'admin_id')
+      await usersCollection.updateOne(
+        { email: "admindat@gmail.com" },
+        { $inc: { balance: amountForAdmin } }
+      );
+    }
+
+    console.log("Balance updated successfully.");
+  } catch (error) {
+    console.error("Error updating balance:", error);
+  }
+}
+
+async function handleCommitTransactionAfterPurchaseSuccess(
+  db,
+  list_artwork_from_cart_item,
+  userId
+) {
+  try {
+    const transactionsCollection = db.collection("transactions");
+
+    for (const artwork of list_artwork_from_cart_item) {
+      const artworkId = artwork._id;
+
+      // Tạo một bản ghi mới trong collection transactions
+      await transactionsCollection.insertOne({
+        userId: userId,
+        artworkId: artworkId,
+        artwork: artwork,
+      });
+    }
+
+    console.log("Transactions committed successfully.");
+  } catch (error) {
+    console.error("Error committing transactions:", error);
+  }
+}
+
+async function handleDelectCartItemAfterTransactionsSuccess(db, userId) {
+  await db.collection("carts_items").deleteMany({ userId: userId });
+}
 module.exports = { app, userResults, artworkResults };
