@@ -1240,7 +1240,7 @@ app.get('/api/transactions', async (req, res) => {
               from: "users",
               localField: "artwork.userid",
               foreignField: "_id",
-              as: "creator",
+              as: "creator ",
             },
           },
         ])
@@ -1251,6 +1251,29 @@ app.get('/api/transactions', async (req, res) => {
   } catch (e) {
     res.status(500).json({ message: `Could not get every transactions: ${e}` });
     console.log('ERROR GET TRANSACTIONS: ', e);
+  }
+});
+
+// CAREFUL THIS API DELETE EVERYTHING
+app.delete('/api/delete', async (req, res) => {
+  try {
+    const db = await connectToDatabase();
+
+    await db.collection('users').deleteMany({ name: { $ne: "admin Edited" } });
+
+    await Promise.all([
+      db.collection('artworks').deleteMany({}),
+      db.collection('comments').deleteMany({}),
+      db.collection('carts_items').deleteMany({}),
+      db.collection('saved').deleteMany({}),
+      db.collection('transactions').deleteMany({}),
+      db.collection('follows').deleteMany({})
+    ]);
+
+    res.status(200).send("Toutes les données ont été supprimées sauf l'utilisateur 'admin Edited'");
+  } catch (error) {
+    console.error('Erreur lors de la suppression des données:', error);
+    res.status(500).send("Une erreur s'est produite lors de la suppression des données.");
   }
 });
 
