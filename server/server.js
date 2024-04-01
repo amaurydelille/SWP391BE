@@ -807,6 +807,36 @@ app.post("/api/users/:userId/follow/:creatorId", async (req, res) => {
   }
 });
 
+// Get a follow couple
+app.get('/api/users/:userId/follow/:creatorId', async (req, res) => {
+  try {
+    const { userId, creatorId } = req.params;
+    const db = await connectToDatabase();
+    const follow = await db
+        .collection('follows')
+        .find({ userId: userId, creator: creatorId }).toArray();
+    const result = follow.length == 1;
+    res.status(200).json({ follow: result })
+  } catch (e) {
+    res.status(500).json({ message: `Could not get follow: ${e}` });
+  }
+});
+
+// Unfollow a creator
+app.delete('/api/users/:userId/follow/:creatorId', async (req, res) => {
+  try {
+    const { userId, creatorId } = req.params;
+    const db = await connectToDatabase();
+    await db
+        .collection('follows')
+        .deleteOne({ userId: userId, creatorId: creatorId });
+
+    res.status(200).json({ message: 'Creator unfollowed successfully' });
+  } catch (e) {
+    res.status(500).json({ message: `Creator could not be unfollowed: ${e}` });
+  }
+});
+
 // Get follower number
 app.get("/api/users/:userId/followers", async (req, res) => {
   try {
