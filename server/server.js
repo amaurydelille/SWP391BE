@@ -1523,4 +1523,20 @@ async function handleCommitTransactionAfterPurchaseSuccess(
 async function handleDelectCartItemAfterTransactionsSuccess(db, userId) {
   await db.collection("carts_items").deleteMany({ userId: userId });
 }
+
+app.put('/api/users/:userId/balance', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const amount = parseInt(req.body);
+    const db = await connectToDatabase();
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId)});
+    const balance = parseInt(user.balance);
+    await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: { balance: balance + amount } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erreur lors de la mise à jour du solde de l'utilisateur.");
+  }
+});
+
+
 module.exports = { app, userResults, artworkResults };
