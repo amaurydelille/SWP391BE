@@ -191,6 +191,7 @@ app.post("/api/register", async (req, res) => {
         password: hashedPassword,
         role: "audience",
         balance: 0,
+        follow: 0
       });
       res.status(200).send({ register: true });
     }
@@ -506,6 +507,31 @@ app.get("/api/:artworkId/comments", async (req, res) => {
   }
 });
 
+// GET COMMENTS FOR USER
+app.get('/api/users/:userId/comments', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const db = await connectToDatabase();
+    const comments = await db.collection('comments').find({ userId: userId }).toArray();
+
+    res.status(200).json({ comments: comments });
+  } catch (e) {
+    res.status(500).json({ message: `Could not get comments: ${e}` });
+  }
+});
+
+// DELETE COMMENTS
+app.delete('/api/comment/:commentId', async (req, res) => {
+  try {
+    const commentId = req.params.commentId;
+    const db = await connectToDatabase();
+    await db.collection('comments').deleteOne({ _id: new ObjectId(commentId) });
+    res.status(200).json({ message: 'Comments deleted' });
+  } catch (e) {
+    res.status(500).json({ message: `Could not delete comment: ${e}` });
+  }
+});
+
 // Save Artwork API
 app.post("/api/:userId/saved", async (req, res) => {
   try {
@@ -773,7 +799,7 @@ app.put("/api/users/:userId", async (req, res) => {
     const userId = req.params.userId;
     const { name, email, password, picture } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { name, email, hashedPassword, picture };
+    const user = { name, email, password: hashedPassword };
 
     Object.keys(user).forEach(
       (key) => user[key] === undefined && delete user[key]
