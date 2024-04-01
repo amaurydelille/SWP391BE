@@ -814,13 +814,16 @@ app.get('/api/users/:userId/follow/:creatorId', async (req, res) => {
     const db = await connectToDatabase();
     const follow = await db
         .collection('follows')
-        .find({ userId: userId, creator: creatorId }).toArray();
-    const result = follow.length == 1;
-    res.status(200).json({ follow: result })
+        .find({ userId: userId, creatorId: creatorId }).toArray();
+    if (follow.length > 0)
+      res.status(200).json({ follow: true });
+    else
+      res.status(200).json({ follow: false });
   } catch (e) {
     res.status(500).json({ message: `Could not get follow: ${e}` });
   }
 });
+
 
 // Unfollow a creator
 app.delete('/api/users/:userId/follow/:creatorId', async (req, res) => {
@@ -838,13 +841,13 @@ app.delete('/api/users/:userId/follow/:creatorId', async (req, res) => {
 });
 
 // Get follower number
-app.get("/api/users/:userId/followers", async (req, res) => {
+app.get("/api/users/:creatorId/followers", async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const creatorId = req.params.creatorId;
     const db = await connectToDatabase();
     const followers = await db
       .collection("follows")
-      .find({ followedUser: userId })
+      .find({ creatorId: creatorId })
       .toArray();
 
     res.status(200).json({ followers: followers.length });
