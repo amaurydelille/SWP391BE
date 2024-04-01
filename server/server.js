@@ -147,7 +147,9 @@ app.get("/api/users/:userId", async (req, res) => {
       .find({ _id: new ObjectId(userId) })
       .toArray();
     res.status(200).json({ user: user });
+    console.log(user);
   } catch (e) {
+    console.log('error', e);
     res.status(500).json({ message: `Error getting the user: ${e}` });
   }
 });
