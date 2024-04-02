@@ -1183,11 +1183,15 @@ app.delete("/api/payment/:userId", async (req, res) => {
       const artwork = await db
         .collection("artworks")
         .findOne({ _id: new ObjectId(item.artworkId) });
+      const creator = await db
+          .collection('users')
+          .findOne({ _id: new ObjectId(userId) });
       await db.collection("transactions").insertOne({
         userId: userId,
         artworkId: item.artworkId,
         artwork: artwork,
         user: user,
+        creator: creator,
         transac_time: actualDate,
       });
 
