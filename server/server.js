@@ -1571,11 +1571,13 @@ app.put('/api/users/:userId/balance', async (req, res) => {
 // POST HISTORY TRANSACTIONS
 app.post('/api/historytransactions', async (req, res) => {
   try {
-    const { fromUserId, toUserId, description, dateTime } = req.body;
+    const { fromUserId, toUserId, description, type } = req.body;
+    const date = new Date();
+    const actualDate = format(date, "dd/MM/yyyy - HH'h'mm");
     const db = await connectToDatabase();
     await db
         .collection('history_transactions')
-        .insertOne({ fromUserId: fromUserId, toUserId: toUserId, description: description, dateTime: dateTime });
+        .insertOne({ fromUserId: fromUserId, toUserId: toUserId, description: description, dateTime: actualDate, type: type });
     res.status(200).json({ message: 'Posted history transaction successfully' });
   } catch (e) {
     res.status(500).json({ message: `Could not post transaction: ${e}` });
