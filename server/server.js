@@ -1732,4 +1732,86 @@ app.post("/api/deposit/:userid", async (req, res) => {
   }
 });
 
+// dat work
+app.get("/api/payment-history/:userid", async (req, res) => {
+  try {
+    const userId = req.params.userid;
+    const db = await connectToDatabase();
+
+    const paymentHistory = await db
+      .collection("history_transactions")
+      .find({
+        fromUserId: new ObjectId(userId),
+        toUserId: new ObjectId(userId),
+      })
+      .toArray();
+
+    if (paymentHistory.length === 0) {
+      return res.status(404).json({ message: "Payment history not found" });
+    }
+
+    res.status(200).json({ data: paymentHistory });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: `Could not get payment history: ${e}` });
+  }
+});
+
+// Dat work -
+app.get("/api/customer-order-history/:creatorid", async (req, res) => {
+  try {
+    const creatorId = req.params.creatorid;
+    const db = await connectToDatabase();
+
+    const customerOrderHistory = await db
+      .collection("history_transactions")
+      .find({
+        toUserId: new ObjectId(creatorId),
+        type: "creator_profit",
+      })
+      .toArray();
+
+    if (customerOrderHistory.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Customer order history not found" });
+    }
+
+    res.status(200).json({ data: customerOrderHistory });
+  } catch (e) {
+    console.error(e);
+    res
+      .status(500)
+      .json({ message: `Could not get customer order history: ${e}` });
+  }
+});
+
+// Dat work -
+app.get("/api/admin-profit-history/:adminid", async (req, res) => {
+  try {
+    const adminId = req.params.adminid;
+    const db = await connectToDatabase();
+
+    const adminProfitHistory = await db
+      .collection("history_transactions")
+      .find({
+        toUserId: new ObjectId(adminId),
+        type: "admin_profit",
+      })
+      .toArray();
+
+    if (adminProfitHistory.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Admin profit history not found" });
+    }
+
+    res.status(200).json({ data: adminProfitHistory });
+  } catch (e) {
+    console.error(e);
+    res
+      .status(500)
+      .json({ message: `Could not get admin profit history: ${e}` });
+  }
+});
 module.exports = { app, userResults, artworkResults };
