@@ -269,6 +269,7 @@ app.put("/api/artworks/:artworkId", async (req, res) => {
 //     res.status(500).send("Error adding the artwork to your cart");
 //   }
 // });
+// Dat work
 app.post("/api/users/:userId/cart/:artworkId", async (req, res) => {
   const userId = req.params.userId;
   const artworkId = req.params.artworkId;
@@ -277,34 +278,56 @@ app.post("/api/users/:userId/cart/:artworkId", async (req, res) => {
   try {
     const db = await connectToDatabase();
     if (await checkExistsArtworkInTransaction(userId, artworkId)) {
-      res
-        .status(400)
-        .send("You cannot add to cart your artwork that you already bought");
+      res;
+      res.status(400).json({
+        message: "You cannot add to cart your artwork that you already bought",
+      });
     } else if (await checkExistsArtworkInCartItem(userId, artworkId)) {
-      res
-        .status(400)
-        .send(
-          "You cannot add to cart your artwork that you already exists in shopping cart"
-        );
+      res;
+      res.status(400).json({
+        message:
+          "You cannot add to cart your artwork that you already exists in shopping cart",
+      });
     } else {
       await db.collection("carts_items").insertOne(cartItem);
       res.status(200).json({ message: "Artwork added to the cart succesfuly" });
     }
   } catch (error) {
     console.error("Error adding the artwork to your cart:", error);
-    res.status(500).send("Error adding the artwork to your cart");
+    res.status(500).json({ message: "Error adding the artwork to your cart" });
   }
 });
 
 // Dat work
+// async function checkExistsArtworkInTransaction(userId, artworkId) {
+//   try {
+//     const db = await connectToDatabase();
+//     const artworkCollection = db.collection("transactions");
+
+//     const artwork = await artworkCollection.findOne({
+//       artworkId: artworkId,
+//       userId: userId,
+//     });
+
+//     if (artwork) {
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   } catch (error) {
+//     console.error("Error checking artwork existence in transaction:", error);
+//     throw error;
+//   }
+// }
+// Dat work
 async function checkExistsArtworkInTransaction(userId, artworkId) {
   try {
     const db = await connectToDatabase();
-    const artworkCollection = db.collection("transactions");
+    const transactionCollection = db.collection("transactions");
 
-    const artwork = await artworkCollection.findOne({
-      artworkId: artworkId,
+    const artwork = await transactionCollection.findOne({
       userId: userId,
+      artworkId: new ObjectId(artworkId), // Chuyển đổi artworkId thành ObjectId
     });
 
     if (artwork) {
@@ -317,7 +340,6 @@ async function checkExistsArtworkInTransaction(userId, artworkId) {
     throw error;
   }
 }
-
 // Dat work
 async function checkExistsArtworkInCartItem(userId, artworkId) {
   try {
