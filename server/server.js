@@ -553,7 +553,7 @@ app.get("/api/:userId/saved", async (req, res) => {
     const db = await connectToDatabase();
     const savedArtworks = await db
       .collection("saved")
-      .find({ userId: new ObjectId(userId) })
+      .find({ userId: userId })
       .toArray();
 
     res.status(200).json({
