@@ -149,7 +149,7 @@ app.get("/api/users/:userId", async (req, res) => {
     res.status(200).json({ user: user });
     console.log(user);
   } catch (e) {
-    console.log('error', e);
+    console.log("error", e);
     res.status(500).json({ message: `Error getting the user: ${e}` });
   }
 });
@@ -191,7 +191,7 @@ app.post("/api/register", async (req, res) => {
         password: hashedPassword,
         role: "audience",
         balance: 0,
-        follow: 0
+        follow: 0,
       });
       res.status(200).send({ register: true });
     }
@@ -508,11 +508,14 @@ app.get("/api/:artworkId/comments", async (req, res) => {
 });
 
 // GET COMMENTS FOR USER
-app.get('/api/users/:userId/comments', async (req, res) => {
+app.get("/api/users/:userId/comments", async (req, res) => {
   try {
     const userId = req.params.userId;
     const db = await connectToDatabase();
-    const comments = await db.collection('comments').find({ userId: userId }).toArray();
+    const comments = await db
+      .collection("comments")
+      .find({ userId: userId })
+      .toArray();
 
     res.status(200).json({ comments: comments });
   } catch (e) {
@@ -521,12 +524,12 @@ app.get('/api/users/:userId/comments', async (req, res) => {
 });
 
 // DELETE COMMENTS
-app.delete('/api/comment/:commentId', async (req, res) => {
+app.delete("/api/comment/:commentId", async (req, res) => {
   try {
     const commentId = req.params.commentId;
     const db = await connectToDatabase();
-    await db.collection('comments').deleteOne({ _id: new ObjectId(commentId) });
-    res.status(200).json({ message: 'Comments deleted' });
+    await db.collection("comments").deleteOne({ _id: new ObjectId(commentId) });
+    res.status(200).json({ message: "Comments deleted" });
   } catch (e) {
     res.status(500).json({ message: `Could not delete comment: ${e}` });
   }
@@ -834,33 +837,31 @@ app.post("/api/users/:userId/follow/:creatorId", async (req, res) => {
 });
 
 // Get a follow couple
-app.get('/api/users/:userId/follow/:creatorId', async (req, res) => {
+app.get("/api/users/:userId/follow/:creatorId", async (req, res) => {
   try {
     const { userId, creatorId } = req.params;
     const db = await connectToDatabase();
     const follow = await db
-        .collection('follows')
-        .find({ userId: userId, creatorId: creatorId }).toArray();
-    if (follow.length > 0)
-      res.status(200).json({ follow: true });
-    else
-      res.status(200).json({ follow: false });
+      .collection("follows")
+      .find({ userId: userId, creatorId: creatorId })
+      .toArray();
+    if (follow.length > 0) res.status(200).json({ follow: true });
+    else res.status(200).json({ follow: false });
   } catch (e) {
     res.status(500).json({ message: `Could not get follow: ${e}` });
   }
 });
 
-
 // Unfollow a creator
-app.delete('/api/users/:userId/follow/:creatorId', async (req, res) => {
+app.delete("/api/users/:userId/follow/:creatorId", async (req, res) => {
   try {
     const { userId, creatorId } = req.params;
     const db = await connectToDatabase();
     await db
-        .collection('follows')
-        .deleteOne({ userId: userId, creatorId: creatorId });
+      .collection("follows")
+      .deleteOne({ userId: userId, creatorId: creatorId });
 
-    res.status(200).json({ message: 'Creator unfollowed successfully' });
+    res.status(200).json({ message: "Creator unfollowed successfully" });
   } catch (e) {
     res.status(500).json({ message: `Creator could not be unfollowed: ${e}` });
   }
@@ -1184,8 +1185,8 @@ app.delete("/api/payment/:userId", async (req, res) => {
         .collection("artworks")
         .findOne({ _id: new ObjectId(item.artworkId) });
       const creator = await db
-          .collection('users')
-          .findOne({ _id: new ObjectId(userId) });
+        .collection("users")
+        .findOne({ _id: new ObjectId(userId) });
       await db.collection("transactions").insertOne({
         userId: userId,
         artworkId: item.artworkId,
@@ -1211,23 +1212,23 @@ app.get("/api/users/:userId/sold/", async (req, res) => {
     const db = await connectToDatabase();
 
     const transactions = await db
-        .collection("transactions")
-        .aggregate([
-          {
-            $match: {
-              userId: new ObjectId(userId)
-            }
+      .collection("transactions")
+      .aggregate([
+        {
+          $match: {
+            userId: new ObjectId(userId),
           },
-          {
-            $lookup: {
-              from: "users",
-              localField: "userId", //new ObjectId("userId")
-              foreignField: "_id",
-              as: "user"
-            }
-          }
-        ])
-        .toArray();
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId", //new ObjectId("userId")
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+      ])
+      .toArray();
 
     res.status(200).json({ transactions: transactions });
   } catch (error) {
@@ -1237,7 +1238,6 @@ app.get("/api/users/:userId/sold/", async (req, res) => {
     });
   }
 });
-
 
 // Dat work
 app.post("/api/users/:userId/artworks/:artworkId/like", async (req, res) => {
@@ -1333,15 +1333,15 @@ app.get("/api/transactions", async (req, res) => {
   try {
     const db = await connectToDatabase();
     const transactions = await db
-        .collection('transactions')
-        .aggregate([
-          {
-            $lookup: {
-              from: "users",
-              localField: "artwork.userid",
-              foreignField: "_id",
-              as: "creator ",
-            },
+      .collection("transactions")
+      .aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "artwork.userid",
+            foreignField: "_id",
+            as: "creator ",
+          },
         },
       ])
       //.find({})
@@ -1355,11 +1355,14 @@ app.get("/api/transactions", async (req, res) => {
 });
 
 // GET TRANSACTION FOR A USER
-app.get('/api/transactions/:userId', async (req, res) => {
+app.get("/api/transactions/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
     const db = await connectToDatabase();
-    const transactions = await db.collection('transactions').find({ userId: userId }).toArray();
+    const transactions = await db
+      .collection("transactions")
+      .find({ userId: userId })
+      .toArray();
 
     res.status(200).json({ transactions: transactions });
   } catch (e) {
@@ -1368,27 +1371,64 @@ app.get('/api/transactions/:userId', async (req, res) => {
 });
 
 // CAREFUL THIS API DELETE EVERYTHING
-app.delete('/api/delete', async (req, res) => {
+app.delete("/api/delete", async (req, res) => {
   try {
     const db = await connectToDatabase();
 
-    await db.collection('users').deleteMany({ name: { $ne: "admin Edited" } });
+    await db.collection("users").deleteMany({ name: { $ne: "admin Edited" } });
 
     await Promise.all([
-      db.collection('artworks').deleteMany({}),
-      db.collection('comments').deleteMany({}),
-      db.collection('carts_items').deleteMany({}),
-      db.collection('saved').deleteMany({}),
-      db.collection('transactions').deleteMany({}),
-      db.collection('follows').deleteMany({})
+      db.collection("artworks").deleteMany({}),
+      db.collection("comments").deleteMany({}),
+      db.collection("carts_items").deleteMany({}),
+      db.collection("saved").deleteMany({}),
+      db.collection("transactions").deleteMany({}),
+      db.collection("follows").deleteMany({}),
     ]);
 
-    res.status(200).send("Toutes les données ont été supprimées sauf l'utilisateur 'admin Edited'");
+    res
+      .status(200)
+      .send(
+        "Toutes les données ont été supprimées sauf l'utilisateur 'admin Edited'"
+      );
   } catch (error) {
-    console.error('Erreur lors de la suppression des données:', error);
-    res.status(500).send("Une erreur s'est produite lors de la suppression des données.");
+    console.error("Erreur lors de la suppression des données:", error);
+    res
+      .status(500)
+      .send("Une erreur s'est produite lors de la suppression des données.");
   }
 });
+
+// Dat work
+async function handleSaveHistoryTransaction(
+  fromUser,
+  toUser,
+  description,
+  type
+) {
+  try {
+    const date = new Date();
+    const actualDate = format(date, "dd/MM/yyyy - HH'h'mm");
+    const db = await connectToDatabase();
+
+    // Chuyển đổi fromUserId và toUserId thành ObjectId nếu chúng không phải là ObjectId
+    const fromUserId = new ObjectId(fromUser);
+    const toUserId = new ObjectId(toUser);
+
+    await db.collection("history_transactions").insertOne({
+      fromUserId,
+      toUserId,
+      description,
+      dateTime: actualDate,
+      type,
+    });
+
+    return true;
+  } catch (err) {
+    console.log("Err when save history transaction: ", err);
+    return false;
+  }
+}
 
 // DAT WORK
 app.post("/api/paymentv2/:userId", async (req, res) => {
@@ -1429,8 +1469,11 @@ app.post("/api/paymentv2/:userId", async (req, res) => {
     }
 
     if (
-      (await handleIncreaseBalanceToCreatorAndDivideToAdmin(db, artworks)) ===
-      false
+      (await handleIncreaseBalanceToCreatorAndDivideToAdmin(
+        db,
+        artworks,
+        userId
+      )) === false
     ) {
       res.status(400).json({
         message: `something go wrong went increase balance for creator and admin`,
@@ -1484,6 +1527,15 @@ async function handleDecreaseBalancefromCustomers(db, totalAmount, userId) {
 
   if (result.modifiedCount === 1) {
     console.log("Balance updated successfully");
+    await handleSaveHistoryTransaction(
+      user._id,
+      user._id,
+      user.name +
+        " makes payment for the artwork in the shopping cart: - " +
+        totalAmount +
+        "$",
+      "checkout"
+    );
     return true;
   } else {
     console.log("Failed to update balance");
@@ -1493,13 +1545,20 @@ async function handleDecreaseBalancefromCustomers(db, totalAmount, userId) {
 
 async function handleIncreaseBalanceToCreatorAndDivideToAdmin(
   db,
-  list_artwork_from_cart_item
+  list_artwork_from_cart_item,
+  userId
 ) {
   try {
+    const customer = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(userId) });
     const usersCollection = db.collection("users");
 
     for (const artwork of list_artwork_from_cart_item) {
-      const userId = artwork.userid;
+      const creatorid = artwork.userid;
+      const creatorIdString = creatorid._id
+        ? creatorid._id.toString()
+        : creatorid.toString();
       const price = parseInt(artwork.price); // Chuyển giá thành số nguyên
 
       // Tính toán số tiền cho người dùng và admin
@@ -1508,14 +1567,35 @@ async function handleIncreaseBalanceToCreatorAndDivideToAdmin(
 
       // Cập nhật balance cho người dùng và admin
       await usersCollection.updateOne(
-        { _id: userId },
+        { _id: creatorid },
         { $inc: { balance: amountForUser } }
+      );
+      await handleSaveHistoryTransaction(
+        userId,
+        creatorIdString,
+        customer.name +
+          " bought artwork: " +
+          artwork.title +
+          " ~ + " +
+          amountForUser +
+          "$",
+        "creator_profit"
       );
 
       // Cập nhật balance cho admin (giả sử admin có ID là 'admin_id')
       await usersCollection.updateOne(
         { email: "admindat@gmail.com" },
         { $inc: { balance: amountForAdmin } }
+      );
+      await handleSaveHistoryTransaction(
+        userId,
+        "6607d3bda9d50dd8fcdf5724",
+        "admin receives 10% from artwork: " +
+          artwork.title +
+          " + " +
+          amountForAdmin +
+          "$",
+        "admin_profit"
       );
     }
 
@@ -1554,34 +1634,184 @@ async function handleDelectCartItemAfterTransactionsSuccess(db, userId) {
   await db.collection("carts_items").deleteMany({ userId: userId });
 }
 
-app.put('/api/users/:userId/balance', async (req, res) => {
+app.put("/api/users/:userId/balance", async (req, res) => {
   try {
     const userId = req.params.userId;
     const amount = parseInt(req.body);
     const db = await connectToDatabase();
-    const user = await db.collection('users').findOne({ _id: new ObjectId(userId)});
+    const user = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(userId) });
     const balance = parseInt(user.balance);
-    await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: { balance: balance + amount } });
+    await db
+      .collection("users")
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { balance: balance + amount } }
+      );
   } catch (err) {
     console.error(err);
-    res.status(500).send("Erreur lors de la mise à jour du solde de l'utilisateur.");
+    res
+      .status(500)
+      .send("Erreur lors de la mise à jour du solde de l'utilisateur.");
   }
 });
 
 // POST HISTORY TRANSACTIONS
-app.post('/api/historytransactions', async (req, res) => {
+app.post("/api/historytransactions", async (req, res) => {
   try {
     const { fromUserId, toUserId, description, type } = req.body;
     const date = new Date();
     const actualDate = format(date, "dd/MM/yyyy - HH'h'mm");
     const db = await connectToDatabase();
-    await db
-        .collection('history_transactions')
-        .insertOne({ fromUserId: fromUserId, toUserId: toUserId, description: description, dateTime: actualDate, type: type });
-    res.status(200).json({ message: 'Posted history transaction successfully' });
+    await db.collection("history_transactions").insertOne({
+      fromUserId: fromUserId,
+      toUserId: toUserId,
+      description: description,
+      dateTime: actualDate,
+      type: type,
+    });
+    res
+      .status(200)
+      .json({ message: "Posted history transaction successfully" });
   } catch (e) {
     res.status(500).json({ message: `Could not post transaction: ${e}` });
   }
 });
 
+// Datwork - Deposit money to user's account
+app.post("/api/deposit/:userid", async (req, res) => {
+  try {
+    const userId = req.params.userid;
+    const db = await connectToDatabase();
+    const user = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const userBalance = parseFloat(user.balance);
+    if (isNaN(userBalance)) {
+      console.log("Invalid user balance");
+      return res.status(400).json({ error: "Invalid user balance" });
+    }
+
+    const { amount } = req.body;
+    const depositAmount = parseFloat(amount);
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+      return res.status(400).json({ error: "Invalid deposit amount" });
+    }
+
+    const newBalance = userBalance + depositAmount;
+    const result = await db
+      .collection("users")
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { balance: newBalance } }
+      );
+
+    if (result.modifiedCount === 1) {
+      console.log("Balance updated successfully");
+      await handleSaveHistoryTransaction(
+        user._id,
+        user._id,
+        `${user.name} deposited (+${depositAmount}$) to account`,
+        "deposit"
+      );
+      return res.status(200).json({ message: "Deposit successful" });
+    } else {
+      console.log("Error updating balance");
+      return res.status(500).json({ error: "Error updating balance" });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// dat work
+app.get("/api/payment-history/:userid", async (req, res) => {
+  try {
+    const userId = req.params.userid;
+    const db = await connectToDatabase();
+
+    const paymentHistory = await db
+      .collection("history_transactions")
+      .find({
+        fromUserId: new ObjectId(userId),
+        toUserId: new ObjectId(userId),
+      })
+      .toArray();
+
+    if (paymentHistory.length === 0) {
+      return res.status(404).json({ message: "Payment history not found" });
+    }
+
+    res.status(200).json({ data: paymentHistory });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: `Could not get payment history: ${e}` });
+  }
+});
+
+// Dat work -
+app.get("/api/customer-order-history/:creatorid", async (req, res) => {
+  try {
+    const creatorId = req.params.creatorid;
+    const db = await connectToDatabase();
+
+    const customerOrderHistory = await db
+      .collection("history_transactions")
+      .find({
+        toUserId: new ObjectId(creatorId),
+        type: "creator_profit",
+      })
+      .toArray();
+
+    if (customerOrderHistory.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Customer order history not found" });
+    }
+
+    res.status(200).json({ data: customerOrderHistory });
+  } catch (e) {
+    console.error(e);
+    res
+      .status(500)
+      .json({ message: `Could not get customer order history: ${e}` });
+  }
+});
+
+// Dat work -
+app.get("/api/admin-profit-history/:adminid", async (req, res) => {
+  try {
+    const adminId = req.params.adminid;
+    const db = await connectToDatabase();
+
+    const adminProfitHistory = await db
+      .collection("history_transactions")
+      .find({
+        toUserId: new ObjectId(adminId),
+        type: "admin_profit",
+      })
+      .toArray();
+
+    if (adminProfitHistory.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Admin profit history not found" });
+    }
+
+    res.status(200).json({ data: adminProfitHistory });
+  } catch (e) {
+    console.error(e);
+    res
+      .status(500)
+      .json({ message: `Could not get admin profit history: ${e}` });
+  }
+});
 module.exports = { app, userResults, artworkResults };
