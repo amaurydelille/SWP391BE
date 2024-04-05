@@ -867,6 +867,7 @@ app.get("/api/users/:userId/follow/:creatorId", async (req, res) => {
       .collection("follows")
       .find({ userId: userId, creatorId: creatorId })
       .toArray();
+    console.log(follow)
     if (follow.length > 0) res.status(200).json({ follow: true });
     else res.status(200).json({ follow: false });
   } catch (e) {
